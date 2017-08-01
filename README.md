@@ -24,5 +24,6 @@ vim build_tensorflow.conf
 # Finally, compile tensorflow.
 chmod +x build_tensorflow.sh
 ./build_tensorflow.sh
+
+# If no output errors, the pip package will be in the directory: /tmp/tensorflow_pkg/ 
 ```
-tested on odroid-c1, odroid-c2, raspberry pi 2/3. 
