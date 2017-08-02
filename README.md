@@ -1,6 +1,6 @@
 # Tensorflow-on-arm
 
-Inspired by the [tensorflow-on-raspberry-pi](https://raw.githubusercontent.com/samjabrahams/tensorflow-on-raspberry-pi).
+Inspired by the [tensorflow-on-raspberry-pi](https://github.com/samjabrahams/tensorflow-on-raspberry-pi).
 This script applies patch in bazel (for supports aarch64) and changes eigen version for compile with neon support.
 
 ## Dependences
