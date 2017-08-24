@@ -2,14 +2,18 @@
 
 source "build_tensorflow.conf"
 TF_PYTHON_VERSION=${TF_PYTHON_VERSION:-"3.5"}
-TF_VERSION=${TF_VERSION:-"v1.3.0-rc0"}
+TF_VERSION=${TF_VERSION:-"v1.3.0"}
 BAZEL_VERSION=${BAZEL_VERSION:-"0.5.2"}
 WORKDIR=${WORKDIR:-$(pwd)}
-BAZEL_COPT_FLAGS=""
 
 function setCompilerFlag()
 {
-    if [ "$TF_BOARDMODEL_TARGET" == "rpi2" ]; then
+    [ ! -z "$BAZEL_COPT_FLAGS" ] && return 0
+    
+    if [ "$TF_BOARDMODEL_TARGET" == "rpi" ]; then
+        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv6 --copt=-mfpu=vfp --copt=-ftree-vectorize"
+        
+    elif [ "$TF_BOARDMODEL_TARGET" == "rpi2" ]; then
         BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-mcpu=cortex-a7 --copt=-mfpu=neon-vfpv4 --copt=-ftree-vectorize --copt=-mfloat-abi=hard"
 
     elif [ "$TF_BOARDMODEL_TARGET" == "rpi3" ]; then
@@ -239,17 +243,10 @@ function configure_tensorflow()
 {
   cd ${WORKDIR}/tensorflow
   # configure tensorflow
-  export TF_NEED_GCP=0
-  export TF_NEED_CUDA=0
-  export TF_NEED_HDFS=0
-  export TF_NEED_OPENCL=0
-  export TF_NEED_VERBS=0
-  export TF_NEED_MPI=0
-  export TF_NEED_MKL=0
-  export TF_NEED_JEMALLOC=1
-  export CC_OPT_FLAGS="-march=native"
-  export TF_ENABLE_XLA=0
-  PYTHON_BIN_PATH=$(pwd)/../bin/python PYTHON_LIB_PATH=$(pwd)/../lib/python${TF_PYTHON_VERSION}/site-packages $TF_FLAGS ./configure || {
+  export $TF_BUILD_VARS
+  export CC_OPT_FLAGS="--copt=-march=native"
+  bazel clean
+  PYTHON_BIN_PATH=$(pwd)/../bin/python PYTHON_LIB_PATH=$(pwd)/../lib/python${TF_PYTHON_VERSION}/site-packages ./configure || {
       echo "error when configure tensorflow"
       exit 1
   }
