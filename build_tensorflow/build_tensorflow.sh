@@ -1,253 +1,215 @@
 #!/bin/bash
 
-source "build_tensorflow.conf"
+# build_tensorflow -*- shell-script -*-
+#
+#Copyright (c) 2017 Leonardo Lontra
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without
+#modification, are permitted provided that the following conditions
+#are met:
+#1. Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#2. Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#3. Neither the name of the author nor the names of other contributors
+#   may be used to endorse or promote products derived from this software
+#   without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+#IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+#LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+#BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+#WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+#OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+#EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+[ -f "$1" ] && {
+  source "$1"
+} || {
+  echo "Use: $0 <config>"
+  exit 1
+}
+
+source "./patchs.sh"
+
+# builtin variables
+RED='\033[0;31m'
+BLUE='\033[1;36m'
+NC='\033[0m'
 TF_PYTHON_VERSION=${TF_PYTHON_VERSION:-"3.5"}
 TF_VERSION=${TF_VERSION:-"v1.3.0"}
 BAZEL_VERSION=${BAZEL_VERSION:-"0.5.2"}
-WORKDIR=${WORKDIR:-$(pwd)}
+WORKDIR=${WORKDIR:-"$(pwd)"}
+
+function log_failure_msg() {
+	echo -ne "[${RED}ERROR${NC}] $@\n"
+}
+
+function log_app_msg() {
+	echo -ne "[${BLUE}INFO${NC}] $@\n"
+}
+
+function create_tempdir()
+{
+  WORKDIR=${WORKDIR}/sources/
+  if [ ! -d $WORKDIR ]; then
+    mkdir -p ${WORKDIR} || {
+      log_failure_msg "error when creates workdir $WORKDIR"
+      exit 1
+    }
+  fi
+  return 0
+}
 
 function setCompilerFlag()
 {
     [ ! -z "$BAZEL_COPT_FLAGS" ] && return 0
-    
-    if [ "$TF_BOARDMODEL_TARGET" == "rpi" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv6 --copt=-mfpu=vfp --copt=-ftree-vectorize"
-        
-    elif [ "$TF_BOARDMODEL_TARGET" == "rpi2" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-mcpu=cortex-a7 --copt=-mfpu=neon-vfpv4 --copt=-ftree-vectorize --copt=-mfloat-abi=hard"
 
-    elif [ "$TF_BOARDMODEL_TARGET" == "rpi3" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv8-a+crc --copt=-mtune=cortex-a53 --copt=-mfpu=neon-fp-armv8 --copt=-mfloat-abi=hard"
+    if [ "$TF_BOARDMODEL_TARGET" == "pi_one" ]; then
+        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-ftree-vectorize \
+         --copt=-fomit-frame-pointer --copt=-march=armv6 --copt=-mfpu=vfp"
+
+    elif [ "$TF_BOARDMODEL_TARGET" == "pi2" ]; then
+        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-fomit-frame-pointer --copt=-ftree-vectorize \
+        --copt=-mcpu=cortex-a7 --copt=-mfpu=neon-vfpv4  --copt=-mfloat-abi=hard"
+
+    elif [ "$TF_BOARDMODEL_TARGET" == "pi3" ]; then
+        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-ftree-vectorize --copt=-fomit-frame-pointer \
+         --copt=-march=armv8-a+crc --copt=-mtune=cortex-a53 --copt=-mfpu=neon-fp-armv8 --copt=-mfloat-abi=hard"
 
     elif [ "$TF_BOARDMODEL_TARGET" == "beagle_black" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv7-a --copt=-mtune=cortex-a8 --copt=-mfpu=neon --copt=-mfloat-abi=hard"
+        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv7-a \
+        --copt=-mtune=cortex-a8 --copt=-mfpu=neon --copt=-mfloat-abi=hard"
 
     elif [ "$TF_BOARDMODEL_TARGET" == "cubietruck_v5" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv7-a --copt=-mtune=cortex-a7 --copt=-mfpu=neon-vfpv4 --copt=-mfloat-abi=hard"
+        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv7-a \
+        --copt=-mtune=cortex-a7 --copt=-mfpu=neon-vfpv4 --copt=-mfloat-abi=hard"
 
     elif [ "$TF_BOARDMODEL_TARGET" == "banana_pipro" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv7-a --copt=-mtune=cortex-a7 --copt=-mfpu=neon-vfpv4 --copt=-mfloat-abi=hard"
+        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv7-a \
+        --copt=-mtune=cortex-a7 --copt=-mfpu=neon-vfpv4 --copt=-mfloat-abi=hard"
 
     elif [ "$TF_BOARDMODEL_TARGET" == "odroid_c1" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-mcpu=cortex-a5 --copt=-mfpu=neon-vfpv4 --copt=-ftree-vectorize --copt=-mfloat-abi=hard"
+        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-mcpu=cortex-a5 \
+        --copt=-mfpu=neon-vfpv4 --copt=-ftree-vectorize --copt=-mfloat-abi=hard"
 
     elif [ "$TF_BOARDMODEL_TARGET" == "odroid_c2" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv8-a+crc --copt=-mtune=cortex-a53"
+        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv8-a+crc \
+        --copt=-mtune=cortex-a53"
     fi
-}
-
-function bazel_patch()
-{
-patch -p1 << EOF
-From ea6a30f5f4331feabd2a4f9d5ce8ed4eacc80ec0 Mon Sep 17 00:00:00 2001
-From: Leonardo Lontra <lhe.lontra@gmail.com>
-Date: Wed, 19 Jul 2017 03:12:17 +0000
-Subject: [PATCH] fix build aarch64
-
-fix aarch64 autocpuConverter
----
- scripts/bootstrap/buildenv.sh                                        | 2 +-
- .../google/devtools/build/lib/analysis/config/AutoCpuConverter.java  | 2 ++
- src/main/java/com/google/devtools/build/lib/util/CPU.java            | 3 ++-
- .../devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java   | 2 ++
- third_party/BUILD                                                    | 5 +++++
- tools/cpp/cc_configure.bzl                                           | 4 +++-
- 6 files changed, 15 insertions(+), 3 deletions(-)
-
-diff --git a/scripts/bootstrap/buildenv.sh b/scripts/bootstrap/buildenv.sh
-index 88d7e4fc4..e6c94021a 100755
---- a/scripts/bootstrap/buildenv.sh
-+++ b/scripts/bootstrap/buildenv.sh
-@@ -53,7 +53,7 @@ PLATFORM=\$(uname -s | tr 'A-Z' 'a-z')
-
- MACHINE_TYPE="\$(uname -m)"
- MACHINE_IS_64BIT='no'
--if [ "\${MACHINE_TYPE}" = 'amd64' -o "\${MACHINE_TYPE}" = 'x86_64' -o "\${MACHINE_TYPE}" = 's390x' ]; then
-+if [ "\${MACHINE_TYPE}" = 'amd64' -o "\${MACHINE_TYPE}" = 'x86_64' -o "\${MACHINE_TYPE}" = 's390x' -o "\${MACHINE_TYPE}" = 'aarch64' ]; then
-   MACHINE_IS_64BIT='yes'
- fi
-
-diff --git a/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java b/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java
-index d63ffdd63..d14934a87 100644
---- a/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java
-+++ b/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java
-@@ -57,6 +57,8 @@ public class AutoCpuConverter implements Converter<String> {
-               return "arm";
-             case S390X:
-               return "s390x";
-+   	    case AARCH64:
-+              return "aarch64";
-             default:
-               return "unknown";
-           }
-diff --git a/src/main/java/com/google/devtools/build/lib/util/CPU.java b/src/main/java/com/google/devtools/build/lib/util/CPU.java
-index e210eb5c4..a3f7308ad 100644
---- a/src/main/java/com/google/devtools/build/lib/util/CPU.java
-+++ b/src/main/java/com/google/devtools/build/lib/util/CPU.java
-@@ -24,7 +24,8 @@ public enum CPU {
-   X86_32("x86_32", ImmutableSet.of("i386", "i486", "i586", "i686", "i786", "x86")),
-   X86_64("x86_64", ImmutableSet.of("amd64", "x86_64", "x64")),
-   PPC("ppc", ImmutableSet.of("ppc", "ppc64", "ppc64le")),
--  ARM("arm", ImmutableSet.of("aarch64", "arm", "armv7l")),
-+  ARM("arm", ImmutableSet.of("arm", "armv7l")),
-+  AARCH64("aarch64", ImmutableSet.of("aarch64")),
-   S390X("s390x", ImmutableSet.of("s390x", "s390")),
-   UNKNOWN("unknown", ImmutableSet.<String>of());
-
-diff --git a/src/test/java/com/google/devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java b/src/test/java/com/google/devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java
-index ada901e6e..be49c70d8 100644
---- a/src/test/java/com/google/devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java
-+++ b/src/test/java/com/google/devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java
-@@ -71,6 +71,8 @@ public class CrosstoolConfigurationHelper {
-           return "arm";
-         case S390X:
-           return "s390x";
-+        case AARCH64:
-+          return "aarch64";
-         default:
-           return "unknown";
-       }
-diff --git a/third_party/BUILD b/third_party/BUILD
-index 589e659ab..7d77a774f 100644
---- a/third_party/BUILD
-+++ b/third_party/BUILD
-@@ -617,6 +617,11 @@ config_setting(
- )
-
- config_setting(
-+    name = "aarch64",
-+    values = {"host_cpu": "aarch64"},
-+)
-+
-+config_setting(
-     name = "freebsd",
-     values = {"host_cpu": "freebsd"},
- )
-diff --git a/tools/cpp/cc_configure.bzl b/tools/cpp/cc_configure.bzl
-index e23f01403..9cd7dcf0a 100644
---- a/tools/cpp/cc_configure.bzl
-+++ b/tools/cpp/cc_configure.bzl
-@@ -164,8 +164,10 @@ def _get_cpu_value(repository_ctx):
-   result = repository_ctx.execute(["uname", "-m"])
-   if result.stdout.strip() in ["power", "ppc64le", "ppc", "ppc64"]:
-     return "ppc"
--  if result.stdout.strip() in ["arm", "armv7l", "aarch64"]:
-+  if result.stdout.strip() in ["arm", "armv7l"]:
-     return "arm"
-+  if result.stdout.strip() in ["aarch64"]:
-+    return "aarch64"
-   return "k8" if result.stdout.strip() in ["amd64", "x86_64", "x64"] else "piii"
-
-
---
-2.11.0
-
-EOF
-}
-
-function tf_patch()
-{
-patch -p1 << EOF
-From 2b10c812f147008cbf6fca7fa9ec1a2d9164589b Mon Sep 17 00:00:00 2001
-From: Leonardo Lontra <lhe.lontra@gmail.com>
-Date: Tue, 25 Jul 2017 01:08:45 +0000
-Subject: [PATCH] change eigen version
-
----
- tensorflow/workspace.bzl | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
-
-diff --git a/tensorflow/workspace.bzl b/tensorflow/workspace.bzl
-index a5f044060..1c5b5b625 100644
---- a/tensorflow/workspace.bzl
-+++ b/tensorflow/workspace.bzl
-@@ -147,11 +147,11 @@ def tf_workspace(path_prefix="", tf_repo_name=""):
-   native.new_http_archive(
-       name = "eigen_archive",
-       urls = [
--          "http://mirror.bazel.build/bitbucket.org/eigen/eigen/get/f3a22f35b044.tar.gz",
--          "https://bitbucket.org/eigen/eigen/get/f3a22f35b044.tar.gz",
-+          "http://mirror.bazel.build/bitbucket.org/eigen/eigen/get/d781c1de9834.tar.gz",
-+          "https://bitbucket.org/eigen/eigen/get/d781c1de9834.tar.gz",
-       ],
--      sha256 = "ca7beac153d4059c02c8fc59816c82d54ea47fe58365e8aded4082ded0b820c4",
--      strip_prefix = "eigen-eigen-f3a22f35b044",
-+      sha256 = "a34b208da6ec18fa8da963369e166e4a368612c14d956dd2f9d7072904675d9b",
-+      strip_prefix = "eigen-eigen-d781c1de9834",
-       build_file = str(Label("//third_party:eigen.BUILD")),
-   )
- 
--- 
-2.11.0
-
-EOF
 }
 
 function build_bazel()
 {
   if [ ! -z "$(whereis bazel | awk '{ print $2 }')" ]; then
-    echo "bazel already installed."
+    log_app_msg "bazel already installed."
     return 0
   fi
-  
+
   # Build bazel
   cd $WORKDIR
 
   if [ ! -f bazel-${BAZEL_VERSION}-dist.zip ]; then
-    wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip
+    wget --no-check-certificate https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip
   fi
 
   if [ ! -d bazel-${BAZEL_VERSION} ]; then
     mkdir bazel-${BAZEL_VERSION}
     unzip bazel-${BAZEL_VERSION}-dist.zip -d bazel-${BAZEL_VERSION}/
     cd bazel-${BAZEL_VERSION}/
-    [ "$BAZEL_APPLY_SUPPORT_AARCH64_PATH" == "yes" ] && bazel_patch
+    if [ "$BAZEL_APPLY_SUPPORT_AARCH64_PATCH" == "yes" ]; then
+      bazel_patch || {
+        log_failure_msg "error when apply aarch64 patch"
+        exit 1
+      }
+    fi
   else
     cd bazel-${BAZEL_VERSION}/
   fi
 
   ./compile.sh || {
-    echo "error when compile bazel"
-    return 1
+    log_failure_msg "error when compile bazel"
+    exit 1
   }
   cp -a output/bazel /usr/local/bin/
   chmod +x /usr/local/bin/bazel
   return 0
 }
 
-function create_venv()
+function toolchain()
 {
-  WORKDIR=${WORKDIR}/python${TF_PYTHON_VERSION}-work
-  if [ ! -d python${TF_PYTHON_VERSION}-work ]; then
-    virtualenv -p python${TF_PYTHON_VERSION} --system-site-packages python${TF_PYTHON_VERSION}-work || return 1
-  fi
-  source ${WORKDIR}/bin/activate
-  return 0
+  [ "$CROSSTOOL_COMPILER" != "yes" ] && return 0
+
+  CROSSTOOL_DIR="${WORKDIR}/toolchain/${CROSSTOOL_DIR}/"
+
+  [ ! -d "${CROSSTOOL_DIR}/${CROSSTOOL_NAME}/bin/" ] && {
+    mkdir -p ${WORKDIR}/toolchain/
+    wget --no-check-certificate $CROSSTOOL_URL -O toolchain.tar.xz || {
+      log_failure_msg "error when download crosstool"
+      exit 1
+    }
+    tar xf toolchain.tar.xz -C ${WORKDIR}/toolchain/ || {
+      log_failure_msg "error when extract crosstool"
+      exit 1
+    }
+    rm toolchain.tar.xz &>/dev/null
+  }
+
 }
 
 function download_tensorflow()
 {
-  cd $WORKDIR
+  cd ${WORKDIR}
   if [ ! -d tensorflow ]; then
     git clone --recurse-submodules https://github.com/tensorflow/tensorflow || return 1
-    cd tensorflow
-    git checkout tags/${TF_VERSION}
-    [ "$TF_FIX_EIGEN_NEON_SUPPORT" == "yes" ] && tf_patch
+    cd tensorflow/
   else
-    cd tensorflow
+    cd tensorflow/
+    bazel clean &>/dev/null
+    git checkout master
+    git branch -D __temp__
   fi
+
+  [ "${TF_VERSION}" != "master" ] && git checkout tags/${TF_VERSION}
+
+  # creates a temp branch for apply some patches and reuse cloned folder
+  git checkout -b __temp__
+
+  if [ "$TF_FIX_EIGEN_NEON_SUPPORT" == "yes" ]; then
+     tf_patch || {
+       log_failure_msg "error when apply fix eigen version patch"
+       exit 1
+     }
+  fi
+
+  if [ ! -z "$CROSSTOOL_DIR" ] && [ ! -z "$CROSSTOOL_NAME" ]; then
+    tf_toolchain_patch "$CROSSTOOL_NAME" "$CROSSTOOL_DIR" || {
+      log_failure_msg "error when apply crosstool patch"
+      exit 1
+    }
+  fi
+
+  git add .
+  git commit -m "temp modifications"
+
   return 0
 }
 
 function configure_tensorflow()
 {
-  cd ${WORKDIR}/tensorflow
   # configure tensorflow
-  export $TF_BUILD_VARS
-  export CC_OPT_FLAGS="--copt=-march=native"
+  cd ${WORKDIR}/tensorflow
   bazel clean
-  PYTHON_BIN_PATH=$(pwd)/../bin/python PYTHON_LIB_PATH=$(pwd)/../lib/python${TF_PYTHON_VERSION}/site-packages ./configure || {
-      echo "error when configure tensorflow"
+  export PYTHON_BIN_PATH=$(whereis python${TF_PYTHON_VERSION} | awk '{ print $2 }')
+  export ${TF_BUILD_VARS}
+  yes '' | ./configure || {
+      log_failure_msg "error when configure tensorflow"
       exit 1
   }
   return 0
@@ -257,18 +219,46 @@ function build_tensorflow()
 {
   setCompilerFlag
   cd ${WORKDIR}/tensorflow
-  bazel build --local_resources ${BAZEL_AVALIABLE_RAM},${BAZEL_AVALIABLE_CPU},${BAZEL_AVALIABLE_IO} -c opt ${BAZEL_COPT_FLAGS} --verbose_failures tensorflow/tools/pip_package:build_pip_package || return 1
-  bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg || return 1
-  echo "Done."
+
+  if [ ! -z "$BAZEL_AVALIABLE_RAM" ] && [ ! -z "$BAZEL_AVALIABLE_CPU" ] && [ ! -z "$BAZEL_AVALIABLE_IO" ]; then
+    BAZEL_LOCAL_RESOURCES="--local_resources ${BAZEL_AVALIABLE_RAM},${BAZEL_AVALIABLE_CPU},${BAZEL_AVALIABLE_IO}"
+  fi
+
+  bazel build ${BAZEL_LOCAL_RESOURCES} -c opt ${BAZEL_COPT_FLAGS} --verbose_failures ${BAZEL_EXTRA_FLAGS} || return 1
+
+  # Build a wheel, if needs
+  [[ "${BAZEL_EXTRA_FLAGS}" == *"build_pip_package"* ]] && {
+    unset BDIST_OPTS
+    # if crosscompile was activated, builds universal wheel
+    if [ ! -z "$CROSSTOOL_DIR" ] && [ ! -z "$CROSSTOOL_NAME" ]; then
+      export BDIST_OPTS="--universal"
+    fi
+
+    local output="/tmp/tensorflow_pkg"
+
+    # build a wheel.
+    bazel-bin/tensorflow/tools/pip_package/build_pip_package $output || return 1
+
+    if [ ! -z "$BDIST_OPTS" ]; then
+      local f="${output}/$(ls $output | grep -i '.whl' | tail -n1)"
+      local new_f="$(echo $f | sed -rn 's/tensorflow-([^-]+)-([^-]+)-.*/tensorflow-\1-\2-none-any.whl/p')"
+      mv $f $new_f
+      log_app_msg "wheel was renamed of $f for $new_f"
+    fi
+
+  }
+
+  log_app_msg "Done."
 }
 
 function main()
 {
-    create_venv || exit 1
-    build_bazel || exit 1
-    download_tensorflow || exit 1
-    configure_tensorflow || exit 1
-    build_tensorflow || exit 1
+    create_tempdir
+    build_bazel
+    toolchain
+    download_tensorflow
+    configure_tensorflow
+    build_tensorflow
 }
 
 main
