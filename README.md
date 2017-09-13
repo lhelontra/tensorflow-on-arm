@@ -6,7 +6,7 @@ This script applies patch in bazel (for supports aarch64) and changes eigen vers
 ## Dependences
 ```shell
 apt-get install openjdk-8-jdk automake autoconf
-apt-get install curl zip unzip libtool swig zlib1g-dev pkg-config git zip g++ unzip wget
+apt-get install curl zip unzip libtool swig libpng12-dev zlib1g-dev pkg-config git zip g++ unzip wget
 
 # For python2.7
 apt-get install python-numpy python-dev python-pip
