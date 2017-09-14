@@ -35,6 +35,7 @@ see configuration file examples in: build_tensorflow/configs/
 
 ## Finally, compile tensorflow.
 ```shell
+cd build_tensorflow/
 chmod +x build_tensorflow.sh
 ./build_tensorflow.sh <path-of-config>
 # If no output errors, the pip package will be in the directory: /tmp/tensorflow_pkg/ 
