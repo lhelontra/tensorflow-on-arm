@@ -67,44 +67,6 @@ function create_tempdir()
   return 0
 }
 
-function setCompilerFlag()
-{
-    [ ! -z "$BAZEL_COPT_FLAGS" ] && return 0
-
-    if [ "$TF_BOARDMODEL_TARGET" == "pi_one" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-ftree-vectorize \
-         --copt=-fomit-frame-pointer --copt=-march=armv6 --copt=-mfpu=vfp"
-
-    elif [ "$TF_BOARDMODEL_TARGET" == "pi2" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-fomit-frame-pointer --copt=-ftree-vectorize \
-        --copt=-mcpu=cortex-a7 --copt=-mfpu=neon-vfpv4  --copt=-mfloat-abi=hard"
-
-    elif [ "$TF_BOARDMODEL_TARGET" == "pi3" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-ftree-vectorize --copt=-fomit-frame-pointer \
-         --copt=-march=armv8-a+crc --copt=-mtune=cortex-a53 --copt=-mfpu=neon-fp-armv8 --copt=-mfloat-abi=hard"
-
-    elif [ "$TF_BOARDMODEL_TARGET" == "beagle_black" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv7-a \
-        --copt=-mtune=cortex-a8 --copt=-mfpu=neon --copt=-mfloat-abi=hard"
-
-    elif [ "$TF_BOARDMODEL_TARGET" == "cubietruck_v5" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv7-a \
-        --copt=-mtune=cortex-a7 --copt=-mfpu=neon-vfpv4 --copt=-mfloat-abi=hard"
-
-    elif [ "$TF_BOARDMODEL_TARGET" == "banana_pipro" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv7-a \
-        --copt=-mtune=cortex-a7 --copt=-mfpu=neon-vfpv4 --copt=-mfloat-abi=hard"
-
-    elif [ "$TF_BOARDMODEL_TARGET" == "odroid_c1" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-mcpu=cortex-a5 \
-        --copt=-mfpu=neon-vfpv4 --copt=-ftree-vectorize --copt=-mfloat-abi=hard"
-
-    elif [ "$TF_BOARDMODEL_TARGET" == "odroid_c2" ]; then
-        BAZEL_COPT_FLAGS="--copt=-funsafe-math-optimizations --copt=-march=armv8-a+crc \
-        --copt=-mtune=cortex-a53"
-    fi
-}
-
 function build_bazel()
 {
   if [ ! -z "$(whereis bazel | awk '{ print $2 }')" ]; then
@@ -217,7 +179,6 @@ function configure_tensorflow()
 
 function build_tensorflow()
 {
-  setCompilerFlag
   cd ${WORKDIR}/tensorflow
 
   if [ ! -z "$BAZEL_AVALIABLE_RAM" ] && [ ! -z "$BAZEL_AVALIABLE_CPU" ] && [ ! -z "$BAZEL_AVALIABLE_IO" ]; then
