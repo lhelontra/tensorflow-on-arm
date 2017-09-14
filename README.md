@@ -14,10 +14,6 @@ apt-get install python-numpy python-dev python-pip
 # For python3
 apt-get install python3-numpy python3-dev python3-pip
 ```
-## Building from Source
-```shell
-cd build_tensorflow/
-```
 
 ## Cross-compilation
 Make you sure added arm architecture, see how to adds in debian flavors:
