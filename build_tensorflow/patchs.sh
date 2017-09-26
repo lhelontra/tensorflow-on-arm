@@ -112,8 +112,9 @@ EOF
 
 function tf_patch()
 {
-  sed -i 's/f3a22f35b044/d781c1de9834/g' tensorflow/workspace.bzl
-  sed -i 's/ca7beac153d4059c02c8fc59816c82d54ea47fe58365e8aded4082ded0b820c4/a34b208da6ec18fa8da963369e166e4a368612c14d956dd2f9d7072904675d9b/g' tensorflow/workspace.bzl
+  sed -i 's/\/eigen\/eigen\/get\/f3a22f35b044.tar.gz/\/eigen\/eigen\/get\/d781c1de9834.tar.gz/g' tensorflow/workspace.bzl
+  sed -i 's/strip_prefix = \"eigen-eigen-f3a22f35b044\"/strip_prefix = \"eigen-eigen-d781c1de9834\"/g' tensorflow/workspace.bzl
+  sed -i 's/sha256 = \"ca7beac153d4059c02c8fc59816c82d54ea47fe58365e8aded4082ded0b820c4\"/sha256 = \"a34b208da6ec18fa8da963369e166e4a368612c14d956dd2f9d7072904675d9b\"/g' tensorflow/workspace.bzl
 }
 
 function tf_toolchain_patch()
