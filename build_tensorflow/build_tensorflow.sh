@@ -152,7 +152,7 @@ function download_tensorflow()
   fi
 
   if [ ! -z "$CROSSTOOL_DIR" ] && [ ! -z "$CROSSTOOL_NAME" ]; then
-    tf_toolchain_patch "$CROSSTOOL_NAME" "$CROSSTOOL_DIR" || {
+    tf_toolchain_patch "$CROSSTOOL_NAME" "$CROSSTOOL_DIR" "$CROSSTOOL_EXTRA_INCLUDE" || {
       log_failure_msg "error when apply crosstool patch"
       exit 1
     }

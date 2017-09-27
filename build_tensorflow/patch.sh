@@ -22,6 +22,8 @@ function tf_toolchain_patch()
 {
   local CROSSTOOL_NAME="$1"
   local CROSSTOOL_DIR="$2"
+  local CROSSTOOL_EXTRA_INCLUDE="$3"
+  [ -z "$CROSSTOOL_EXTRA_INCLUDE" ] && CROSSTOOL_EXTRA_INCLUDE="/usr/local/include/"
   local CROSSTOOL_VERSION=$($CROSSTOOL_DIR/bin/$CROSSTOOL_NAME-gcc -dumpversion)
   git apply << EOF
 diff --git a/BUILD.local_arm_compiler b/BUILD.local_arm_compiler
@@ -265,6 +267,7 @@ index 000000000..3ff006da8
 +  cxx_builtin_include_directory: "$CROSSTOOL_DIR/lib/gcc/$CROSSTOOL_NAME/$CROSSTOOL_VERSION/include"
 +  cxx_builtin_include_directory: "$CROSSTOOL_DIR/lib/gcc/$CROSSTOOL_NAME/$CROSSTOOL_VERSION/include-fixed"
 +  cxx_builtin_include_directory: "/usr/include"
++  cxx_builtin_include_directory: "$CROSSTOOL_EXTRA_INCLUDE"
 +
 +  cxx_flag: "-std=c++11"
 +  cxx_flag: "-isystem"
@@ -315,7 +318,6 @@ index 000000000..3ff006da8
 +    linker_flag: "-Wl,--gc-sections"
 +  }
 +  linking_mode_flags { mode: DYNAMIC }
-+
 +}
 +
 +toolchain {
