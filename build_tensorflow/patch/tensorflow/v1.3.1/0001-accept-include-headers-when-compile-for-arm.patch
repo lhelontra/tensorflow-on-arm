@@ -1,0 +1,53 @@
+From c1896b5a0e6985bf87392ce755da70c37598b5c0 Mon Sep 17 00:00:00 2001
+From: lhelontra <lhe.lontra@gmail.com>
+Date: Wed, 27 Sep 2017 11:38:19 -0300
+Subject: [PATCH] accept include headers when compile for arm
+
+---
+ tensorflow/core/platform/gif.h  | 2 +-
+ tensorflow/core/platform/jpeg.h | 2 +-
+ tensorflow/core/platform/png.h  | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tensorflow/core/platform/gif.h b/tensorflow/core/platform/gif.h
+index 8a719a8cf..8260dc773 100644
+--- a/tensorflow/core/platform/gif.h
++++ b/tensorflow/core/platform/gif.h
+@@ -20,7 +20,7 @@ limitations under the License.
+ 
+ #if defined(PLATFORM_GOOGLE)
+ #include "tensorflow/core/platform/google/build_config/gif.h"
+-#elif (defined(PLATFORM_POSIX) && !defined(IS_MOBILE_PLATFORM)) || defined(PLATFORM_WINDOWS)
++#elif (defined(PLATFORM_POSIX) && !defined(IS_MOBILE_PLATFORM)) || defined(PLATFORM_WINDOWS) || defined(RASPBERRY_PI)
+ #include <gif_lib.h>
+ #else
+ #error Define the appropriate PLATFORM_<foo> macro for this platform
+diff --git a/tensorflow/core/platform/jpeg.h b/tensorflow/core/platform/jpeg.h
+index f5b4deed5..2bdbaf48a 100644
+--- a/tensorflow/core/platform/jpeg.h
++++ b/tensorflow/core/platform/jpeg.h
+@@ -20,7 +20,7 @@ limitations under the License.
+ 
+ #if defined(PLATFORM_GOOGLE)
+ #include "tensorflow/core/platform/google/build_config/jpeg.h"
+-#elif (defined(PLATFORM_POSIX) && !defined(IS_MOBILE_PLATFORM)) || defined(PLATFORM_WINDOWS)
++#elif (defined(PLATFORM_POSIX) && !defined(IS_MOBILE_PLATFORM)) || defined(PLATFORM_WINDOWS) || defined(RASPBERRY_PI)
+ #include <stddef.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+diff --git a/tensorflow/core/platform/png.h b/tensorflow/core/platform/png.h
+index 4500d9abe..6819e0f96 100644
+--- a/tensorflow/core/platform/png.h
++++ b/tensorflow/core/platform/png.h
+@@ -20,7 +20,7 @@ limitations under the License.
+ 
+ #if defined(PLATFORM_GOOGLE)
+ #include "tensorflow/core/platform/google/build_config/png.h"
+-#elif (defined(PLATFORM_POSIX) && !defined(IS_MOBILE_PLATFORM)) || defined(PLATFORM_WINDOWS)
++#elif (defined(PLATFORM_POSIX) && !defined(IS_MOBILE_PLATFORM)) || defined(PLATFORM_WINDOWS) || defined(RASPBERRY_PI)
+ #include <png.h>
+ #else
+ #error Define the appropriate PLATFORM_<foo> macro for this platform
+-- 
+2.14.1
+

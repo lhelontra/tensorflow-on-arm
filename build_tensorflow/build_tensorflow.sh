@@ -36,7 +36,8 @@
   exit 1
 }
 
-source "./patchs.sh"
+DIR="$(realpath $(dirname $0))"
+source "${DIR}/patch.sh"
 
 # builtin variables
 RED='\033[0;31m'
@@ -45,7 +46,7 @@ NC='\033[0m'
 TF_PYTHON_VERSION=${TF_PYTHON_VERSION:-"3.5"}
 TF_VERSION=${TF_VERSION:-"v1.3.0"}
 BAZEL_VERSION=${BAZEL_VERSION:-"0.5.2"}
-WORKDIR=${WORKDIR:-"$(pwd)"}
+WORKDIR=${WORKDIR:-"$DIR"}
 
 function log_failure_msg() {
 	echo -ne "[${RED}ERROR${NC}] $@\n"
@@ -85,9 +86,9 @@ function build_bazel()
     mkdir bazel-${BAZEL_VERSION}
     unzip bazel-${BAZEL_VERSION}-dist.zip -d bazel-${BAZEL_VERSION}/
     cd bazel-${BAZEL_VERSION}/
-    if [ "$BAZEL_APPLY_SUPPORT_AARCH64_PATCH" == "yes" ]; then
+    if [ "$BAZEL_PATCH" == "yes" ]; then
       bazel_patch || {
-        log_failure_msg "error when apply aarch64 patch"
+        log_failure_msg "error when apply patch"
         exit 1
       }
     fi
@@ -143,9 +144,9 @@ function download_tensorflow()
   # creates a temp branch for apply some patches and reuse cloned folder
   git checkout -b __temp__
 
-  if [ "$TF_FIX_EIGEN_NEON_SUPPORT" == "yes" ]; then
+  if [ "$TF_PATCH" == "yes" ]; then
      tf_patch || {
-       log_failure_msg "error when apply fix eigen version patch"
+       log_failure_msg "error when apply patch"
        exit 1
      }
   fi

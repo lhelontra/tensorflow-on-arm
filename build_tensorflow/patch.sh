@@ -1,120 +1,21 @@
 #!/bin/bash
 
+PATCH_DIR="$(dirname ${BASH_SOURCE[0]})"
+
 function bazel_patch()
 {
-patch -p1 << EOF
-From ea6a30f5f4331feabd2a4f9d5ce8ed4eacc80ec0 Mon Sep 17 00:00:00 2001
-From: Leonardo Lontra <lhe.lontra@gmail.com>
-Date: Wed, 19 Jul 2017 03:12:17 +0000
-Subject: [PATCH] fix build aarch64
-
-fix aarch64 autocpuConverter
----
- scripts/bootstrap/buildenv.sh                                        | 2 +-
- .../google/devtools/build/lib/analysis/config/AutoCpuConverter.java  | 2 ++
- src/main/java/com/google/devtools/build/lib/util/CPU.java            | 3 ++-
- .../devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java   | 2 ++
- third_party/BUILD                                                    | 5 +++++
- tools/cpp/cc_configure.bzl                                           | 4 +++-
- 6 files changed, 15 insertions(+), 3 deletions(-)
-
-diff --git a/scripts/bootstrap/buildenv.sh b/scripts/bootstrap/buildenv.sh
-index 88d7e4fc4..e6c94021a 100755
---- a/scripts/bootstrap/buildenv.sh
-+++ b/scripts/bootstrap/buildenv.sh
-@@ -53,7 +53,7 @@ PLATFORM=\$(uname -s | tr 'A-Z' 'a-z')
-
- MACHINE_TYPE="\$(uname -m)"
- MACHINE_IS_64BIT='no'
--if [ "\${MACHINE_TYPE}" = 'amd64' -o "\${MACHINE_TYPE}" = 'x86_64' -o "\${MACHINE_TYPE}" = 's390x' ]; then
-+if [ "\${MACHINE_TYPE}" = 'amd64' -o "\${MACHINE_TYPE}" = 'x86_64' -o "\${MACHINE_TYPE}" = 's390x' -o "\${MACHINE_TYPE}" = 'aarch64' ]; then
-   MACHINE_IS_64BIT='yes'
- fi
-
-diff --git a/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java b/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java
-index d63ffdd63..d14934a87 100644
---- a/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java
-+++ b/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java
-@@ -57,6 +57,8 @@ public class AutoCpuConverter implements Converter<String> {
-               return "arm";
-             case S390X:
-               return "s390x";
-+   	    case AARCH64:
-+              return "aarch64";
-             default:
-               return "unknown";
-           }
-diff --git a/src/main/java/com/google/devtools/build/lib/util/CPU.java b/src/main/java/com/google/devtools/build/lib/util/CPU.java
-index e210eb5c4..a3f7308ad 100644
---- a/src/main/java/com/google/devtools/build/lib/util/CPU.java
-+++ b/src/main/java/com/google/devtools/build/lib/util/CPU.java
-@@ -24,7 +24,8 @@ public enum CPU {
-   X86_32("x86_32", ImmutableSet.of("i386", "i486", "i586", "i686", "i786", "x86")),
-   X86_64("x86_64", ImmutableSet.of("amd64", "x86_64", "x64")),
-   PPC("ppc", ImmutableSet.of("ppc", "ppc64", "ppc64le")),
--  ARM("arm", ImmutableSet.of("aarch64", "arm", "armv7l")),
-+  ARM("arm", ImmutableSet.of("arm", "armv7l")),
-+  AARCH64("aarch64", ImmutableSet.of("aarch64")),
-   S390X("s390x", ImmutableSet.of("s390x", "s390")),
-   UNKNOWN("unknown", ImmutableSet.<String>of());
-
-diff --git a/src/test/java/com/google/devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java b/src/test/java/com/google/devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java
-index ada901e6e..be49c70d8 100644
---- a/src/test/java/com/google/devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java
-+++ b/src/test/java/com/google/devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java
-@@ -71,6 +71,8 @@ public class CrosstoolConfigurationHelper {
-           return "arm";
-         case S390X:
-           return "s390x";
-+        case AARCH64:
-+          return "aarch64";
-         default:
-           return "unknown";
-       }
-diff --git a/third_party/BUILD b/third_party/BUILD
-index 589e659ab..7d77a774f 100644
---- a/third_party/BUILD
-+++ b/third_party/BUILD
-@@ -617,6 +617,11 @@ config_setting(
- )
-
- config_setting(
-+    name = "aarch64",
-+    values = {"host_cpu": "aarch64"},
-+)
-+
-+config_setting(
-     name = "freebsd",
-     values = {"host_cpu": "freebsd"},
- )
-diff --git a/tools/cpp/cc_configure.bzl b/tools/cpp/cc_configure.bzl
-index e23f01403..9cd7dcf0a 100644
---- a/tools/cpp/cc_configure.bzl
-+++ b/tools/cpp/cc_configure.bzl
-@@ -164,8 +164,10 @@ def _get_cpu_value(repository_ctx):
-   result = repository_ctx.execute(["uname", "-m"])
-   if result.stdout.strip() in ["power", "ppc64le", "ppc", "ppc64"]:
-     return "ppc"
--  if result.stdout.strip() in ["arm", "armv7l", "aarch64"]:
-+  if result.stdout.strip() in ["arm", "armv7l"]:
-     return "arm"
-+  if result.stdout.strip() in ["aarch64"]:
-+    return "aarch64"
-   return "k8" if result.stdout.strip() in ["amd64", "x86_64", "x64"] else "piii"
-
-
---
-2.11.0
-
-EOF
+  for f in $(find "${PATCH_DIR}/patch/bazel/${BAZEL_VERSION}" -type f); do
+    patch -p1 < "$f" || return 1
+  done
+  return 0
 }
-
 
 function tf_patch()
 {
-  sed -i 's/\/eigen\/eigen\/get\/f3a22f35b044.tar.gz/\/eigen\/eigen\/get\/d781c1de9834.tar.gz/g' tensorflow/workspace.bzl
-  sed -i 's/strip_prefix = \"eigen-eigen-f3a22f35b044\"/strip_prefix = \"eigen-eigen-d781c1de9834\"/g' tensorflow/workspace.bzl
-  sed -i 's/sha256 = \"ca7beac153d4059c02c8fc59816c82d54ea47fe58365e8aded4082ded0b820c4\"/sha256 = \"a34b208da6ec18fa8da963369e166e4a368612c14d956dd2f9d7072904675d9b\"/g' tensorflow/workspace.bzl
+  for f in $(find "${PATCH_DIR}/patch/tensorflow/${TF_VERSION}" -type f); do
+    git apply "$f" || return 1
+  done
+  return 0
 }
 
 function tf_toolchain_patch()

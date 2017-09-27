@@ -1,16 +1,16 @@
 # Tensorflow-on-arm
 
 Inspired by the [tensorflow-on-raspberry-pi](https://github.com/samjabrahams/tensorflow-on-raspberry-pi).
-This script applies patch in bazel (for supports aarch64) and changes eigen version for compile with neon support.
+Tool for compile tensorflow for arm.
 
 ## Dependences
 ```shell
 apt-get install openjdk-8-jdk automake autoconf
-apt-get install curl zip unzip libtool swig libpng12-dev zlib1g-dev pkg-config git zip g++ unzip wget
+apt-get install curl zip unzip libtool swig libpng12-dev zlib1g-dev pkg-config git zip g++ unzip wget xz-utils
 
 # For python2.7
 apt-get install python-numpy python-dev python-pip
- 
+
 # For python3
 apt-get install python3-numpy python3-dev python3-pip
 ```
@@ -38,5 +38,5 @@ see configuration file examples in: build_tensorflow/configs/
 cd build_tensorflow/
 chmod +x build_tensorflow.sh
 ./build_tensorflow.sh <path-of-config>
-# If no output errors, the pip package will be in the directory: /tmp/tensorflow_pkg/ 
+# If no output errors, the pip package will be in the directory: /tmp/tensorflow_pkg/
 ```

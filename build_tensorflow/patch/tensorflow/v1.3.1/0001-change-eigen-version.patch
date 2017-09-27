@@ -1,0 +1,32 @@
+From aac57d88ee04526d5daf30461b0fb482c112434d Mon Sep 17 00:00:00 2001
+From: lhelontra <lhe.lontra@gmail.com>
+Date: Wed, 27 Sep 2017 13:07:32 -0300
+Subject: [PATCH] change eigen version
+
+---
+ tensorflow/workspace.bzl | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/tensorflow/workspace.bzl b/tensorflow/workspace.bzl
+index 8cb5a1f68..519a30ac5 100644
+--- a/tensorflow/workspace.bzl
++++ b/tensorflow/workspace.bzl
+@@ -147,11 +147,11 @@ def tf_workspace(path_prefix="", tf_repo_name=""):
+   native.new_http_archive(
+       name = "eigen_archive",
+       urls = [
+-          "http://mirror.bazel.build/bitbucket.org/eigen/eigen/get/f3a22f35b044.tar.gz",
+-          "https://bitbucket.org/eigen/eigen/get/f3a22f35b044.tar.gz",
++          "http://mirror.bazel.build/bitbucket.org/eigen/eigen/get/d781c1de9834.tar.gz",
++          "https://bitbucket.org/eigen/eigen/get/d781c1de9834.tar.gz",
+       ],
+-      sha256 = "ca7beac153d4059c02c8fc59816c82d54ea47fe58365e8aded4082ded0b820c4",
+-      strip_prefix = "eigen-eigen-f3a22f35b044",
++      sha256 = "a34b208da6ec18fa8da963369e166e4a368612c14d956dd2f9d7072904675d9b",
++      strip_prefix = "eigen-eigen-d781c1de9834",
+       build_file = str(Label("//third_party:eigen.BUILD")),
+   )
+ 
+-- 
+2.14.1
+
