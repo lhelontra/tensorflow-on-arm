@@ -202,7 +202,17 @@ function build_tensorflow()
       mv $f $new_f
       log_app_msg "wheel was renamed of $f for $new_f"
     fi
+  }
+  
+  # Copy library files, if needs
+  [[ "${BAZEL_EXTRA_FLAGS}" == *"libtensorflow.so"* ]] && {
+    local output="/tmp/tensorflow_lib"
 
+    # collect the library files.
+    cp bazel-bin/tensorflow/libtensorflow.so $output
+    cp tensorflow/c/c_api.h $output
+    
+    log_app_msg "Library files moved to $output"
   }
 
   log_app_msg "Done."
