@@ -98,9 +98,9 @@ function build_bazel()
 
   chmod +x output/bazel
   if [ -w /usr/local/ ]; then
-    cp output/bazel /usr/local/bin/
+    cp -a output/bazel /usr/local/bin/
   else
-    sudo cp output/bazel /usr/local/bin/
+    sudo cp -a output/bazel /usr/local/bin/
   fi
 
   return 0
