@@ -95,8 +95,8 @@ function build_bazel()
     log_failure_msg "error when compile bazel"
     exit 1
   }
-  cp -a output/bazel /usr/local/bin/
-  chmod +x /usr/local/bin/bazel
+  sudo cp -a output/bazel /usr/local/bin/
+  sudo chmod +x /usr/local/bin/bazel
   return 0
 }
 
