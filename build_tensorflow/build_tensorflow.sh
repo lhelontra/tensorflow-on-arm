@@ -130,6 +130,7 @@ function download_tensorflow()
   else
     cd tensorflow/
     bazel clean &>/dev/null
+    git reset --hard
     git checkout master
     git branch -D __temp__
   fi
