@@ -214,7 +214,7 @@ function build_tensorflow()
         log_failure_msg "error when removes output dir $output"
         exit 1
       }
-    fi    
+    fi
     mkdir -p ${output} || {
       log_failure_msg "error when creates output dir $output"
       exit 1
