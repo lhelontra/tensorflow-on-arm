@@ -4,6 +4,7 @@ PATCH_DIR="$(dirname ${BASH_SOURCE[0]})"
 
 function bazel_patch()
 {
+  [ ! -d "${PATCH_DIR}/patch/bazel/${BAZEL_VERSION}" ] && return 0
   for f in $(find "${PATCH_DIR}/patch/bazel/${BAZEL_VERSION}" -type f); do
     patch -p1 < "$f" || return 1
   done
@@ -12,6 +13,7 @@ function bazel_patch()
 
 function tf_patch()
 {
+  [ ! -d "${PATCH_DIR}/patch/tensorflow/${TF_VERSION}" ] && return 0
   for f in $(find "${PATCH_DIR}/patch/tensorflow/${TF_VERSION}" -type f); do
     git apply "$f" || return 1
   done
