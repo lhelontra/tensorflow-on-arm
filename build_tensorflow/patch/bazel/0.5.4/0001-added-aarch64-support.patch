@@ -1,0 +1,102 @@
+From ba0290a1da62eea5efd1396129d31bd926acaa4d Mon Sep 17 00:00:00 2001
+From: lhelontra <lhe.lontra@gmail.com>
+Date: Tue, 7 Nov 2017 02:14:32 -0200
+Subject: [PATCH] added aarch64 support
+
+---
+ scripts/bootstrap/buildenv.sh                                        | 2 +-
+ .../google/devtools/build/lib/analysis/config/AutoCpuConverter.java  | 2 ++
+ src/main/java/com/google/devtools/build/lib/util/CPU.java            | 3 ++-
+ .../devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java   | 2 ++
+ third_party/BUILD                                                    | 5 +++++
+ tools/cpp/lib_cc_configure.bzl                                       | 4 +++-
+ 6 files changed, 15 insertions(+), 3 deletions(-)
+
+diff --git a/scripts/bootstrap/buildenv.sh b/scripts/bootstrap/buildenv.sh
+index 88d7e4fc4..e6c94021a 100755
+--- a/scripts/bootstrap/buildenv.sh
++++ b/scripts/bootstrap/buildenv.sh
+@@ -53,7 +53,7 @@ PLATFORM="$(uname -s | tr 'A-Z' 'a-z')"
+ 
+ MACHINE_TYPE="$(uname -m)"
+ MACHINE_IS_64BIT='no'
+-if [ "${MACHINE_TYPE}" = 'amd64' -o "${MACHINE_TYPE}" = 'x86_64' -o "${MACHINE_TYPE}" = 's390x' ]; then
++if [ "${MACHINE_TYPE}" = 'amd64' -o "${MACHINE_TYPE}" = 'x86_64' -o "${MACHINE_TYPE}" = 's390x' -o "${MACHINE_TYPE}" = 'aarch64' ]; then
+   MACHINE_IS_64BIT='yes'
+ fi
+ 
+diff --git a/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java b/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java
+index d63ffdd63..444b71864 100644
+--- a/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java
++++ b/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java
+@@ -57,6 +57,8 @@ public class AutoCpuConverter implements Converter<String> {
+               return "arm";
+             case S390X:
+               return "s390x";
++            case AARCH64:
++              return "aarch64";
+             default:
+               return "unknown";
+           }
+diff --git a/src/main/java/com/google/devtools/build/lib/util/CPU.java b/src/main/java/com/google/devtools/build/lib/util/CPU.java
+index e210eb5c4..a3f7308ad 100644
+--- a/src/main/java/com/google/devtools/build/lib/util/CPU.java
++++ b/src/main/java/com/google/devtools/build/lib/util/CPU.java
+@@ -24,7 +24,8 @@ public enum CPU {
+   X86_32("x86_32", ImmutableSet.of("i386", "i486", "i586", "i686", "i786", "x86")),
+   X86_64("x86_64", ImmutableSet.of("amd64", "x86_64", "x64")),
+   PPC("ppc", ImmutableSet.of("ppc", "ppc64", "ppc64le")),
+-  ARM("arm", ImmutableSet.of("aarch64", "arm", "armv7l")),
++  ARM("arm", ImmutableSet.of("arm", "armv7l")),
++  AARCH64("aarch64", ImmutableSet.of("aarch64")),
+   S390X("s390x", ImmutableSet.of("s390x", "s390")),
+   UNKNOWN("unknown", ImmutableSet.<String>of());
+ 
+diff --git a/src/test/java/com/google/devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java b/src/test/java/com/google/devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java
+index ada901e6e..be49c70d8 100644
+--- a/src/test/java/com/google/devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java
++++ b/src/test/java/com/google/devtools/build/lib/rules/cpp/CrosstoolConfigurationHelper.java
+@@ -71,6 +71,8 @@ public class CrosstoolConfigurationHelper {
+           return "arm";
+         case S390X:
+           return "s390x";
++        case AARCH64:
++          return "aarch64";
+         default:
+           return "unknown";
+       }
+diff --git a/third_party/BUILD b/third_party/BUILD
+index 63da36c58..e3d6784d0 100644
+--- a/third_party/BUILD
++++ b/third_party/BUILD
+@@ -617,6 +617,11 @@ config_setting(
+     values = {"host_cpu": "arm"},
+ )
+ 
++config_setting(
++    name = "aarch64",
++    values = {"host_cpu": "aarch64"},
++)
++
+ config_setting(
+     name = "freebsd",
+     values = {"host_cpu": "freebsd"},
+diff --git a/tools/cpp/lib_cc_configure.bzl b/tools/cpp/lib_cc_configure.bzl
+index 2287955ad..b1b403ffe 100644
+--- a/tools/cpp/lib_cc_configure.bzl
++++ b/tools/cpp/lib_cc_configure.bzl
+@@ -103,8 +103,10 @@ def get_cpu_value(repository_ctx):
+   result = repository_ctx.execute(["uname", "-m"])
+   if result.stdout.strip() in ["power", "ppc64le", "ppc", "ppc64"]:
+     return "ppc"
+-  if result.stdout.strip() in ["arm", "armv7l", "aarch64"]:
++  if result.stdout.strip() in ["arm", "armv7l"]:
+     return "arm"
++  if result.stdout.strip() in ["aarch64"]:
++    return "aarch64"
+   return "k8" if result.stdout.strip() in ["amd64", "x86_64", "x64"] else "piii"
+ 
+ 
+-- 
+2.14.2
+
