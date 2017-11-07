@@ -42,6 +42,7 @@ TF_PYTHON_VERSION=${TF_PYTHON_VERSION:-"3.5"}
 TF_VERSION=${TF_VERSION:-"v1.3.0"}
 BAZEL_VERSION=${BAZEL_VERSION:-"0.5.2"}
 WORKDIR=${WORKDIR:-"$DIR"}
+BAZEL_BIN="$(whereis bazel | awk '{ print $2 }')"
 
 function log_failure_msg() {
 	echo -ne "[${RED}ERROR${NC}] $@\n"
@@ -65,12 +66,21 @@ function create_tempdir()
 
 function build_bazel()
 {
-  if [ ! -z "$(whereis bazel | awk '{ print $2 }')" ]; then
+  mkdir -p ${WORKDIR}/bin/
+
+  # force compiling bazel if version is different or not found
+  if [ -z "$BAZEL_BIN" ] || [ "$($BAZEL_BIN version | grep -i 'label' | awk '{ print $3 }' | tr -d '-')" != "${BAZEL_VERSION}" ]; then
+      BAZEL_BIN="${WORKDIR}/bin/bazel-${BAZEL_VERSION}"
+  fi
+
+  PATH="${WORKDIR}/bin/:${PATH}"
+
+  if [ -f "$BAZEL_BIN" ]; then
     log_app_msg "bazel already installed."
+    ln -sf $BAZEL_BIN ${WORKDIR}/bin/bazel
     return 0
   fi
 
-  # Build bazel
   cd $WORKDIR
 
   if [ ! -f bazel-${BAZEL_VERSION}-dist.zip ]; then
@@ -80,6 +90,7 @@ function build_bazel()
   if [ ! -d bazel-${BAZEL_VERSION} ]; then
     mkdir bazel-${BAZEL_VERSION}
     unzip bazel-${BAZEL_VERSION}-dist.zip -d bazel-${BAZEL_VERSION}/
+    rm -f bazel-${BAZEL_VERSION}-dist.zip
     cd bazel-${BAZEL_VERSION}/
     if [ "$BAZEL_PATCH" == "yes" ]; then
       bazel_patch || {
@@ -97,11 +108,7 @@ function build_bazel()
   }
 
   chmod +x output/bazel
-  if [ -w /usr/local/ ]; then
-    cp -a output/bazel /usr/local/bin/
-  else
-    sudo cp -a output/bazel /usr/local/bin/
-  fi
+  mv output/bazel $BAZEL_BIN
 
   return 0
 }
@@ -135,7 +142,7 @@ function download_tensorflow()
     cd tensorflow/
   else
     cd tensorflow/
-    bazel clean &>/dev/null
+    $BAZEL_BIN clean &>/dev/null
     git reset --hard
     git checkout master
     git branch -D __temp__
@@ -170,7 +177,7 @@ function configure_tensorflow()
 {
   # configure tensorflow
   cd ${WORKDIR}/tensorflow
-  bazel clean
+  $BAZEL_BIN clean
   export PYTHON_BIN_PATH=$(whereis python${TF_PYTHON_VERSION} | awk '{ print $2 }')
   export ${TF_BUILD_VARS}
   yes '' | ./configure || {
@@ -188,7 +195,7 @@ function build_tensorflow()
     BAZEL_LOCAL_RESOURCES="--local_resources ${BAZEL_AVALIABLE_RAM},${BAZEL_AVALIABLE_CPU},${BAZEL_AVALIABLE_IO}"
   fi
 
-  bazel build ${BAZEL_LOCAL_RESOURCES} -c opt ${BAZEL_COPT_FLAGS} --verbose_failures ${BAZEL_EXTRA_FLAGS} || return 1
+  $BAZEL_BIN build ${BAZEL_LOCAL_RESOURCES} -c opt ${BAZEL_COPT_FLAGS} --verbose_failures ${BAZEL_EXTRA_FLAGS} || return 1
 
   # Build a wheel, if needs
   [[ "${BAZEL_EXTRA_FLAGS}" == *"build_pip_package"* ]] && {
