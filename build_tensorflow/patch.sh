@@ -249,7 +249,6 @@ index 000000000..3ff006da8
 +  target_cpu: "armeabi"
 +  target_system_name: "armeabi"
 +  toolchain_identifier: "$CROSSTOOL_NAME"
-+
 +  tool_path { name: "ar" path: "$CROSSTOOL_DIR/bin/$CROSSTOOL_NAME-ar" }
 +  tool_path { name: "compat-ld" path: "/bin/false" }
 +  tool_path { name: "cpp" path: "$CROSSTOOL_DIR/bin/$CROSSTOOL_NAME-cpp" }
@@ -257,7 +256,6 @@ index 000000000..3ff006da8
 +  tool_path { name: "gcc" path: "$CROSSTOOL_DIR/bin/$CROSSTOOL_NAME-gcc" }
 +  tool_path { name: "gcov" path: "$CROSSTOOL_DIR/bin/$CROSSTOOL_NAME-gcov" }
 +  tool_path { name: "ld" path: "$CROSSTOOL_DIR/bin/$CROSSTOOL_NAME-ld" }
-+
 +  tool_path { name: "nm" path: "$CROSSTOOL_DIR/bin/$CROSSTOOL_NAME-nm" }
 +  tool_path { name: "objcopy" path: "$CROSSTOOL_DIR/bin/$CROSSTOOL_NAME-objcopy" }
 +  tool_path { name: "objdump" path: "$CROSSTOOL_DIR/bin/$CROSSTOOL_NAME-objdump" }
@@ -269,11 +267,14 @@ index 000000000..3ff006da8
 +  cxx_builtin_include_directory: "$CROSSTOOL_DIR/lib/gcc/$CROSSTOOL_NAME/$CROSSTOOL_VERSION/include"
 +  cxx_builtin_include_directory: "$CROSSTOOL_DIR/lib/gcc/$CROSSTOOL_NAME/$CROSSTOOL_VERSION/include-fixed"
 +  cxx_builtin_include_directory: "/usr/include"
++  cxx_builtin_include_directory: "/usr/include/$CROSSTOOL_NAME"
 +  cxx_builtin_include_directory: "$CROSSTOOL_EXTRA_INCLUDE"
 +
 +  cxx_flag: "-std=c++11"
 +  cxx_flag: "-isystem"
-+  cxx_flag: "/usr/include/"
++  cxx_flag: "/usr/include"
++  cxx_flag: "-isystem"
++  cxx_flag: "/usr/include/$CROSSTOOL_NAME"
 +  linker_flag: "-lstdc++"
 +
 +  unfiltered_cxx_flag: "-Wno-builtin-macro-redefined"
@@ -291,7 +292,6 @@ index 000000000..3ff006da8
 +
 +  linker_flag: "-no-canonical-prefixes"
 +  linker_flag: "-pass-exit-codes"
-+
 +  linker_flag: "-Wl,--build-id=md5"
 +  linker_flag: "-Wl,--hash-style=gnu"
 +
