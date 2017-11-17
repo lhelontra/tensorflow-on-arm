@@ -144,6 +144,7 @@ function download_tensorflow()
     cd tensorflow/
     $BAZEL_BIN clean &>/dev/null
     git reset --hard
+    git clean -f -d
     git checkout master
     git branch -D __temp__
   fi
