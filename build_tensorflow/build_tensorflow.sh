@@ -181,6 +181,24 @@ function configure_tensorflow()
   $BAZEL_BIN clean
   export PYTHON_BIN_PATH=$(whereis python${TF_PYTHON_VERSION} | awk '{ print $2 }')
   export ${TF_BUILD_VARS}
+
+  # if need_cuda is enabled, search sdk
+  if [ "$TF_NEED_CUDA" == "1" ]; then
+     local nvcc_path=$(which nvcc)
+
+     if [ ! -z "$nvcc_path" ]; then
+         local cuda_location=$(echo $nvcc_path | sed 's/\/bin\/nvcc//')
+         local cuda_version=$(cat "${cuda_location}/version.txt" | awk '{ print $3 }' | cut -d'.' -f-2)
+         local cudnn_version=$(readlink $(find "${cuda_location}/" -iname '*libcudnn.so') | cut -d'.' -f3)
+
+         export CUDA_TOOLKIT_PATH="$cuda_location"
+         export TF_CUDA_VERSION=$cuda_version
+         export TF_CUDNN_VERSION=$cudnn_version
+     else
+         export TF_NEED_CUDA=0
+     fi
+  fi
+
   yes '' | ./configure || {
       log_failure_msg "error when configure tensorflow"
       exit 1
