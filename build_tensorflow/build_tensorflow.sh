@@ -42,7 +42,7 @@ TF_PYTHON_VERSION=${TF_PYTHON_VERSION:-"3.5"}
 TF_VERSION=${TF_VERSION:-"v1.3.0"}
 BAZEL_VERSION=${BAZEL_VERSION:-"0.5.2"}
 WORKDIR=${WORKDIR:-"$DIR"}
-BAZEL_BIN="$(which bazel)"
+BAZEL_BIN="$(command -v bazel)"
 
 function log_failure_msg() {
 	echo -ne "[${RED}ERROR${NC}] $@\n"
@@ -179,12 +179,12 @@ function configure_tensorflow()
   # configure tensorflow
   cd ${WORKDIR}/tensorflow
   $BAZEL_BIN clean
-  export PYTHON_BIN_PATH=$(which python${TF_PYTHON_VERSION})
+  export PYTHON_BIN_PATH=$(command -v python${TF_PYTHON_VERSION})
   export ${TF_BUILD_VARS}
 
   # if need_cuda is enabled, search sdk
   if [ "$TF_NEED_CUDA" == "1" ]; then
-     local nvcc_path=$(which nvcc)
+     local nvcc_path=$(command -v nvcc)
 
      if [ ! -z "$nvcc_path" ]; then
          local cuda_location=$(echo $nvcc_path | sed 's/\/bin\/nvcc//')
