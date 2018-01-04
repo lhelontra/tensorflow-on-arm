@@ -42,7 +42,7 @@ TF_PYTHON_VERSION=${TF_PYTHON_VERSION:-"3.5"}
 TF_VERSION=${TF_VERSION:-"v1.3.0"}
 BAZEL_VERSION=${BAZEL_VERSION:-"0.5.2"}
 WORKDIR=${WORKDIR:-"$DIR"}
-BAZEL_BIN="$(whereis bazel | awk '{ print $2 }')"
+BAZEL_BIN="$(which bazel)"
 
 function log_failure_msg() {
 	echo -ne "[${RED}ERROR${NC}] $@\n"
@@ -179,7 +179,7 @@ function configure_tensorflow()
   # configure tensorflow
   cd ${WORKDIR}/tensorflow
   $BAZEL_BIN clean
-  export PYTHON_BIN_PATH=$(whereis python${TF_PYTHON_VERSION} | awk '{ print $2 }')
+  export PYTHON_BIN_PATH=$(which python${TF_PYTHON_VERSION})
   export ${TF_BUILD_VARS}
 
   # if need_cuda is enabled, search sdk
