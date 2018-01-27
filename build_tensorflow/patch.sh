@@ -270,12 +270,12 @@ index 000000000..3ff006da8
 +  cxx_builtin_include_directory: "/usr/include/$CROSSTOOL_NAME"
 +  cxx_builtin_include_directory: "$CROSSTOOL_EXTRA_INCLUDE"
 +
-+  cxx_flag: "-std=c++11"
 +  cxx_flag: "-isystem"
 +  cxx_flag: "/usr/include"
 +  cxx_flag: "-isystem"
 +  cxx_flag: "/usr/include/$CROSSTOOL_NAME"
 +  linker_flag: "-lstdc++"
++
 +
 +  unfiltered_cxx_flag: "-Wno-builtin-macro-redefined"
 +  unfiltered_cxx_flag: "-D__DATE__=\"redacted\""
