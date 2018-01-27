@@ -143,6 +143,8 @@ function download_tensorflow()
   else
     cd tensorflow/
     $BAZEL_BIN clean &>/dev/null
+
+    # clean temp branch
     git reset --hard
     git clean -f -d
     git checkout master
@@ -153,6 +155,10 @@ function download_tensorflow()
 
   # creates a temp branch for apply some patches and reuse cloned folder
   git checkout -b __temp__
+
+  # sets git local config for apply patch
+  git config user.email "temp@example.com"
+  git config user.name "temp"
 
   if [ "$TF_PATCH" == "yes" ]; then
      tf_patch || {
