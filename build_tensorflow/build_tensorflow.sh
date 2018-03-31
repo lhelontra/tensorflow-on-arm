@@ -151,7 +151,17 @@ function download_tensorflow()
     git branch -D __temp__
   fi
 
-  [ "${TF_VERSION}" != "master" ] && git checkout tags/${TF_VERSION}
+  [ "${TF_VERSION}" != "master" ] && {
+    # tries update tensorflow repository when not found selected version
+    git checkout tags/${TF_VERSION} || {
+      git pull
+    }
+    # tries checkout again
+    git checkout tags/${TF_VERSION} || {
+      log_failure_msg "error when using tensorflow version ${TF_VERSION}"
+      exit 1
+    }
+  }
 
   # creates a temp branch for apply some patches and reuse cloned folder
   git checkout -b __temp__
