@@ -155,11 +155,11 @@ function download_tensorflow()
     # tries update tensorflow repository when not found selected version
     git checkout tags/${TF_VERSION} || {
       git pull
-    }
-    # tries checkout again
-    git checkout tags/${TF_VERSION} || {
-      log_failure_msg "error when using tensorflow version ${TF_VERSION}"
-      exit 1
+      # tries checkout again
+      git checkout tags/${TF_VERSION} || {
+        log_failure_msg "error when using tensorflow version ${TF_VERSION}"
+        exit 1
+      }
     }
   }
 
