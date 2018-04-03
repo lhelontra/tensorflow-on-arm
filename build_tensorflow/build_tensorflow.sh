@@ -41,6 +41,7 @@ NC='\033[0m'
 TF_PYTHON_VERSION=${TF_PYTHON_VERSION:-"3.5"}
 TF_VERSION=${TF_VERSION:-"v1.3.0"}
 BAZEL_VERSION=${BAZEL_VERSION:-"0.5.2"}
+TF_GIT_URL=${TF_GIT_URL:"https://github.com/tensorflow/tensorflow"}
 WORKDIR=${WORKDIR:-"$DIR"}
 BAZEL_BIN="$(command -v bazel)"
 
@@ -138,7 +139,7 @@ function download_tensorflow()
 {
   cd ${WORKDIR}
   if [ ! -d tensorflow ]; then
-    git clone --recurse-submodules https://github.com/tensorflow/tensorflow || return 1
+    git clone --recurse-submodules ${TF_GIT_URL} || return 1
     cd tensorflow/
   else
     cd tensorflow/
@@ -152,11 +153,11 @@ function download_tensorflow()
   fi
 
   [ "${TF_VERSION}" != "master" ] && {
-    # tries update tensorflow repository when not found selected version
-    git checkout tags/${TF_VERSION} || {
+    # tries update tensorflow repository when not found selected version/commit hash
+    git checkout ${TF_VERSION} || {
       git pull
       # tries checkout again
-      git checkout tags/${TF_VERSION} || {
+      git checkout ${TF_VERSION} || {
         log_failure_msg "error when using tensorflow version ${TF_VERSION}"
         exit 1
       }
