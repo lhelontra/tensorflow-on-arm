@@ -1,0 +1,24 @@
+From cb8f9ba2742db33b65f4dce1df865048bbbd0f30 Mon Sep 17 00:00:00 2001
+From: temp <temp@example.com>
+Date: Mon, 30 Apr 2018 21:34:06 +0000
+Subject: [PATCH] fix png neon
+
+---
+ third_party/png.BUILD | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/third_party/png.BUILD b/third_party/png.BUILD
+index 76ab32d69c..bc4551a509 100644
+--- a/third_party/png.BUILD
++++ b/third_party/png.BUILD
+@@ -35,6 +35,7 @@ cc_library(
+     ],
+     includes = ["."],
+     linkopts = ["-lm"],
++    copts = ["-DPNG_ARM_NEON_OPT=0"],
+     visibility = ["//visibility:public"],
+     deps = ["@zlib_archive//:zlib"],
+ )
+-- 
+2.11.0
+
