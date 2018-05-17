@@ -19,7 +19,7 @@ apt-get install python3-numpy python3-dev python3-pip python3-mock
 Make you sure added arm architecture, see how to adds in debian flavors:
 ```shell
 dpkg --add-architecture armhf
-echo "deb [arch=armhf] http://httpredir.debian.org/debian/ stretch main contrib non-free" >> /etc/apt/source.list
+echo "deb [arch=armhf] http://httpredir.debian.org/debian/ stretch main contrib non-free" >> /etc/apt/sources.list
 ```
 if you want compile python support:
 ```shell
