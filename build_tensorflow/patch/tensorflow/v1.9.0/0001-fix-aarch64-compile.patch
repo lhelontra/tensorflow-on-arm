@@ -1,0 +1,37 @@
+From 69f51b310cae58761a6acaa5413ad60f6de5ed99 Mon Sep 17 00:00:00 2001
+From: temp <temp@example.com>
+Date: Wed, 11 Jul 2018 19:18:19 +0000
+Subject: [PATCH] fix aarch64 compile
+
+---
+ tensorflow/contrib/lite/kernels/internal/optimized/depthwiseconv_uint8.h | 1 +
+ .../lite/kernels/internal/optimized/depthwiseconv_uint8_3x3_filter.h     | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/tensorflow/contrib/lite/kernels/internal/optimized/depthwiseconv_uint8.h b/tensorflow/contrib/lite/kernels/internal/optimized/depthwiseconv_uint8.h
+index 3fd00c8930..1c14c01a72 100644
+--- a/tensorflow/contrib/lite/kernels/internal/optimized/depthwiseconv_uint8.h
++++ b/tensorflow/contrib/lite/kernels/internal/optimized/depthwiseconv_uint8.h
+@@ -1700,6 +1700,7 @@ inline void DepthwiseConv(const uint8* input_data, const Dims<4>& input_dims,
+ // Enable for arm64 except for the Nvidia Linux 4 Tegra (L4T) running on
+ // Jetson TX-2. This compiler does not support the offsetof() macro.
+ #if defined(__aarch64__) && !defined(GOOGLE_L4T)
++#include <stddef.h>
+   // Call kernel optimized for depthwise convolutions using 3x3 filters if
+   // parameters are supported.
+   if (Fast3x3FilterKernelSupported(
+diff --git a/tensorflow/contrib/lite/kernels/internal/optimized/depthwiseconv_uint8_3x3_filter.h b/tensorflow/contrib/lite/kernels/internal/optimized/depthwiseconv_uint8_3x3_filter.h
+index 8cd72239e9..eb79552d58 100644
+--- a/tensorflow/contrib/lite/kernels/internal/optimized/depthwiseconv_uint8_3x3_filter.h
++++ b/tensorflow/contrib/lite/kernels/internal/optimized/depthwiseconv_uint8_3x3_filter.h
+@@ -26,6 +26,7 @@ namespace optimized_ops {
+ // Enable for arm64 except for the Nvidia Linux 4 Tegra (L4T) running on
+ // Jetson TX-2. This compiler does not support the offsetof() macro.
+ #if defined(__aarch64__) && !defined(GOOGLE_L4T)
++#include <stddef.h>
+ 
+ // clang-format gets confused with this file and ends up formatting lines to
+ // be larger than 80 characters. Turn off here and back on at the end of the
+-- 
+2.11.0
+
