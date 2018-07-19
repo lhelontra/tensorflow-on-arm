@@ -6,7 +6,7 @@ Tool for compile tensorflow for arm.
 ## Dependences
 ```shell
 apt-get install openjdk-8-jdk automake autoconf
-apt-get install curl zip unzip libtool swig libpng12-dev zlib1g-dev pkg-config git zip g++ unzip wget xz-utils
+apt-get install curl zip unzip libtool swig libpng12-dev zlib1g-dev pkg-config git g++ wget xz-utils
 
 # For python2.7
 apt-get install python-numpy python-dev python-pip python-mock
