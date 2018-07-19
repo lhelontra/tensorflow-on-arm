@@ -5,6 +5,7 @@ Tool for compile tensorflow for arm.
 
 ## Dependences
 ```shell
+# NOTE: the libpng12-dev have in wheezy, jessie or sid distro.
 apt-get install openjdk-8-jdk automake autoconf
 apt-get install curl zip unzip libtool swig libpng12-dev zlib1g-dev pkg-config git g++ wget xz-utils
 
