@@ -103,10 +103,11 @@ function build_bazel()
     cd bazel-${BAZEL_VERSION}/
   fi
 
-  ./compile.sh || {
+  ./compile.sh
+  if [ ! -f ./output/bazel ]; then
     log_failure_msg "error when compile bazel"
     exit 1
-  }
+  fi
 
   chmod +x output/bazel
   mv output/bazel $BAZEL_BIN
