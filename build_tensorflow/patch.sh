@@ -115,12 +115,12 @@ index 000000000..e5d8cc384
 +  ],
 +)
 diff --git a/WORKSPACE b/WORKSPACE
-index e0931512f..5b7152a67 100644
+index 17961829a6..7285580846 100644
 --- a/WORKSPACE
 +++ b/WORKSPACE
-@@ -7,6 +7,12 @@ closure_repositories()
-
- load("//tensorflow:workspace.bzl", "tf_workspace")
+@@ -30,6 +30,12 @@ android_workspace()
+ # Please add all new TensorFlow dependencies in workspace.bzl.
+ tf_workspace()
 
 +new_local_repository(
 +    name = "local_arm_compiler",
@@ -128,9 +128,9 @@ index e0931512f..5b7152a67 100644
 +    build_file = "BUILD.local_arm_compiler",
 +)
 +
- # Uncomment and update the paths in these entries to build the Android demo.
- #android_sdk_repository(
- #    name = "androidsdk",
+ new_http_archive(
+     name = "inception_v1",
+     build_file = "models.BUILD",
 diff --git a/tools/local_arm_compiler/BUILD b/tools/local_arm_compiler/BUILD
 new file mode 100644
 index 000000000..ccddd6d50
