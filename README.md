@@ -16,6 +16,16 @@ apt-get install python-numpy python-dev python-pip python-mock
 apt-get install python3-numpy python3-dev python3-pip python3-mock
 ```
 
+## TensorFlow on Raspberry Pi
+
+### It's officially supported!
+
+Python wheels for TensorFlow are being [officially supported](https://medium.com/tensorflow/tensorflow-1-9-officially-supports-the-raspberry-pi-b91669b0aa0). As well, this repository maintain up-to-date tensorflow wheels for raspberry pi.
+
+### installation
+[Check out the official TensorFlow website for more information.](https://www.tensorflow.org/install/install_raspbian)
+
+
 ## Cross-compilation
 Make you sure added arm architecture, see how to adds in debian flavors:
 ```shell
