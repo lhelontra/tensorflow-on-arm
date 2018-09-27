@@ -40,7 +40,9 @@ BLUE='\033[1;36m'
 NC='\033[0m'
 TF_PYTHON_VERSION=${TF_PYTHON_VERSION:-"3.5"}
 TF_VERSION=${TF_VERSION:-"v1.3.0"}
+TF_BUILD_OUTPUT=${TF_BUILD_OUTPUT:-"/tmp/tensorflow_pkg"}
 BAZEL_VERSION=${BAZEL_VERSION:-"0.5.2"}
+CROSSTOOL_WHEEL_ARCH=${CROSSTOOL_WHEEL_ARCH:-"any"}
 TF_GIT_URL=${TF_GIT_URL:-"https://github.com/tensorflow/tensorflow"}
 WORKDIR=${WORKDIR:-"$DIR"}
 BAZEL_BIN="$(command -v bazel)"
@@ -242,14 +244,12 @@ function build_tensorflow()
       export BDIST_OPTS="--universal"
     fi
 
-    local output="/tmp/tensorflow_pkg"
-
     # build a wheel.
-    bazel-bin/tensorflow/tools/pip_package/build_pip_package $output || return 1
+    bazel-bin/tensorflow/tools/pip_package/build_pip_package $TF_BUILD_OUTPUT || return 1
 
     if [ ! -z "$BDIST_OPTS" ]; then
-      local f="${output}/$(ls $output | grep -i '.whl' | tail -n1)"
-      local new_f="$(echo $f | sed -rn 's/tensorflow-([^-]+)-([^-]+)-.*/tensorflow-\1-\2-none-any.whl/p')"
+      local f="${TF_BUILD_OUTPUT}/$(ls -t $TF_BUILD_OUTPUT | grep -i '.whl' | head -n1)"
+      local new_f="$(echo $f | sed -rn "s/tensorflow-([^-]+)-([^-]+)-.*/tensorflow-\1-\2-none-${CROSSTOOL_WHEEL_ARCH}.whl/p")"
       mv $f $new_f
       log_app_msg "wheel was renamed of $f for $new_f"
     fi
@@ -257,25 +257,23 @@ function build_tensorflow()
 
   # Copy library files, if needs
   [[ "${BAZEL_EXTRA_FLAGS}" == *"libtensorflow.so"* ]] && {
-    local output="/tmp/tensorflow_lib"
-
     # Clean and/or create output dir
-    if [ -d $output ]; then
-      rm -rf ${output} || {
-        log_failure_msg "error when removes output dir $output"
+    if [ -d $TF_BUILD_OUTPUT ]; then
+      rm -rf ${TF_BUILD_OUTPUT} || {
+        log_failure_msg "error when removes output dir $TF_BUILD_OUTPUT"
         exit 1
       }
     fi
-    mkdir -p ${output} || {
-      log_failure_msg "error when creates output dir $output"
+    mkdir -p ${TF_BUILD_OUTPUT} || {
+      log_failure_msg "error when creates output dir $TF_BUILD_OUTPUT"
       exit 1
     }
 
     # collect the library files.
-    cp bazel-bin/tensorflow/libtensorflow.so $output
-    cp tensorflow/c/c_api.h $output
+    cp bazel-bin/tensorflow/libtensorflow.so $TF_BUILD_OUTPUT
+    cp tensorflow/c/c_api.h $TF_BUILD_OUTPUT
 
-    log_app_msg "Library files moved to $output"
+    log_app_msg "Library files moved to $TF_BUILD_OUTPUT"
   }
 
   log_app_msg "Done."
