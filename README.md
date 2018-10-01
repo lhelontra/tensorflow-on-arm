@@ -12,8 +12,16 @@ apt-get install curl zip unzip libtool swig libpng12-dev zlib1g-dev pkg-config g
 # For python2.7
 apt-get install python-numpy python-dev python-pip python-mock
 
+# if using a virtual environment, omit the --user argument
+pip install -U --user keras_applications==1.0.5 --no-deps
+pip install -U --user keras_preprocessing==1.0.3 --no-deps
+
 # For python3
 apt-get install python3-numpy python3-dev python3-pip python3-mock
+
+# if using a virtual environment, omit the --user argument
+pip3 install -U --user keras_applications==1.0.5 --no-deps
+pip3 install -U --user keras_preprocessing==1.0.3 --no-deps
 ```
 
 ## TensorFlow on Raspberry Pi
@@ -40,6 +48,12 @@ apt-get install libpython-all-dev:armhf
 # For python3
 apt-get install libpython3-all-dev:armhf
 ```
+using docker
+```shell
+cd build_tensorflow/
+docker build -t tf-arm -f Dockerfile .
+docker run -it -v /tmp/tensorflow_pkg/:/tmp/tensorflow_pkg/ --env TF_PYTHON_VERSION=3.5 tf-arm ./build_tensorflow.sh <path-of-config>
+```
 
 ## Edit tweaks like bazel resources, board model, and others
 see configuration file examples in: build_tensorflow/configs/
@@ -48,6 +62,6 @@ see configuration file examples in: build_tensorflow/configs/
 ```shell
 cd build_tensorflow/
 chmod +x build_tensorflow.sh
-./build_tensorflow.sh <path-of-config>
+TF_PYTHON_VERSION=3.5 ./build_tensorflow.sh <path-of-config>
 # If no output errors, the pip package will be in the directory: /tmp/tensorflow_pkg/
 ```
