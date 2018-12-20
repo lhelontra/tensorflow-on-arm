@@ -1,0 +1,622 @@
+From 3437098ba5b111817ef6ac5906d86934168704b7 Mon Sep 17 00:00:00 2001
+From: temp <temp@example.com>
+Date: Fri, 14 Dec 2018 23:21:38 +0000
+Subject: [PATCH] Make AWS, GCP, HDFS, Kafka and Ignite default on, but
+ introduce the ability to disable them
+
+Fixes #22819
+
+PiperOrigin-RevId: 216931905
+---
+ tools/bazel.rc                                |  7 ++
+ configure.py                                  | 30 +++----
+ tensorflow/BUILD                              | 32 +++++++-
+ tensorflow/contrib/BUILD                      | 80 ++++++++++++++++---
+ .../core/platform/default/build_config.bzl    | 80 ++++++++++++-------
+ tensorflow/tools/lib_package/BUILD            | 54 +++++++++----
+ tensorflow/tools/pip_package/BUILD            | 39 ++++++---
+ 7 files changed, 238 insertions(+), 84 deletions(-)
+
+diff --git a/tools/bazel.rc b/tools/bazel.rc
+index d5d20309df..1945078789 100644
+--- a/tools/bazel.rc
++++ b/tools/bazel.rc
+@@ -66,6 +66,13 @@ build:gdr --define=with_gdr_support=true
+ build:ngraph --define=with_ngraph_support=true
+ build:verbs --define=with_verbs_support=true
+ 
++# Options to disable default on features
++build:noaws --define=no_aws_support=true
++build:nogcp --define=no_gcp_support=true
++build:nohdfs --define=no_hdfs_support=true
++build:nokafka --define=no_kafka_support=true
++build:noignite --define=no_ignite_support=true
++
+ build --define=use_fast_cpp_protos=true
+ build --define=allow_oversize_protos=true
+ build --define=grpc_no_ares=true
+diff --git a/configure.py b/configure.py
+index e7709cc56c..5a4207476f 100644
+--- a/configure.py
++++ b/configure.py
+@@ -1573,8 +1573,6 @@ def main():
+   if is_ppc64le():
+     write_action_env_to_bazelrc('OMP_NUM_THREADS', 1)
+ 
+-  set_build_var(environ_cp, 'TF_NEED_IGNITE', 'Apache Ignite',
+-                'with_ignite_support', True, 'ignite')
+   xla_enabled_by_default = is_linux()
+   set_build_var(environ_cp, 'TF_ENABLE_XLA', 'XLA JIT', 'with_xla_support',
+                 xla_enabled_by_default, 'xla')
+@@ -1669,19 +1667,23 @@ def main():
+     create_android_ndk_rule(environ_cp)
+     create_android_sdk_rule(environ_cp)
+ 
+-  # On Windows, we don't have MKL support and the build is always monolithic.
+-  # So no need to print the following message.
+-  # TODO(pcloudy): remove the following if check when they make sense on Windows
+-  if not is_windows():
+-    print('Preconfigured Bazel build configs. You can use any of the below by '
+-          'adding "--config=<>" to your build command. See tools/bazel.rc for '
+-          'more details.')
+-    config_info_line('mkl', 'Build with MKL support.')
+-    config_info_line('monolithic', 'Config for mostly static monolithic build.')
+-    config_info_line('gdr', 'Build with GDR support.')
+-    config_info_line('verbs', 'Build with libverbs support.')
+-    config_info_line('ngraph', 'Build with Intel nGraph support.')
++  print('Preconfigured Bazel build configs. You can use any of the below by '
++        'adding "--config=<>" to your build command. See tools/bazel.rc for '
++        'more details.')
++  config_info_line('mkl', 'Build with MKL support.')
++  config_info_line('monolithic', 'Config for mostly static monolithic build.')
++  config_info_line('gdr', 'Build with GDR support.')
++  config_info_line('verbs', 'Build with libverbs support.')
++  config_info_line('ngraph', 'Build with Intel nGraph support.')
++
++  print('Preconfigured Bazel build configs to DISABLE default on features:')
++  config_info_line('noaws', 'Disable AWS S3 filesystem support.')
++  config_info_line('nogcp', 'Disable GCP support.')
++  config_info_line('nohdfs', 'Disable HDFS support.')
++  config_info_line('noignite', 'Disable Apacha Ignite support.')
++  config_info_line('nokafka', 'Disable Apache Kafka support.')
+ 
+ 
+ if __name__ == '__main__':
+   main()
++
+diff --git a/tensorflow/BUILD b/tensorflow/BUILD
+index 9b62a50452..77e3baaff1 100644
+--- a/tensorflow/BUILD
++++ b/tensorflow/BUILD
+@@ -209,12 +209,40 @@ config_setting(
+     visibility = ["//visibility:public"],
+ )
+ 
++# Features that are default ON are handled differently below.
++#
++config_setting(
++    name = "no_aws_support",
++    define_values = {"no_aws_support": "true"},
++    visibility = ["//visibility:public"],
++)
++
++config_setting(
++    name = "no_gcp_support",
++    define_values = {"no_gcp_support": "true"},
++    visibility = ["//visibility:public"],
++)
++
++config_setting(
++    name = "no_hdfs_support",
++    define_values = {"no_hdfs_support": "true"},
++    visibility = ["//visibility:public"],
++)
++
++config_setting(
++    name = "no_ignite_support",
++    define_values = {"no_ignite_support": "true"},
++    visibility = ["//visibility:public"],
++)
++
+ config_setting(
+-    name = "with_ignite_support",
+-    define_values = {"with_ignite_support": "true"},
++    name = "no_kafka_support",
++    define_values = {"no_kafka_support": "true"},
+     visibility = ["//visibility:public"],
+ )
+ 
++# Crosses between platforms and file system libraries not supported on those
++# platforms due to limitations in nested select() statements.
+ config_setting(
+     name = "with_cuda_support_windows_override",
+     define_values = {"using_cuda_nvcc": "true"},
+diff --git a/tensorflow/contrib/BUILD b/tensorflow/contrib/BUILD
+index fa06d351d4..78ad19a4ab 100644
+--- a/tensorflow/contrib/BUILD
++++ b/tensorflow/contrib/BUILD
+@@ -113,22 +113,52 @@ py_library(
+         "//tensorflow/python:util",
+         "//tensorflow/python/estimator:estimator_py",
+     ] + if_mpi(["//tensorflow/contrib/mpi_collectives:mpi_collectives_py"]) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
+         "//tensorflow:linux_s390x": [],
+         "//tensorflow:windows": [],
++        "//tensorflow:no_kafka_support": [],
+         "//conditions:default": [
+-            "//tensorflow/contrib/bigtable",
+-            "//tensorflow/contrib/cloud:cloud_py",
+-            "//tensorflow/contrib/fused_conv:fused_conv_py",  # unresolved symbols, need to export more symbols
+             "//tensorflow/contrib/kafka",
++        ],
++    }) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_aws_support": [],
++        "//conditions:default": [
+             "//tensorflow/contrib/kinesis",
++        ],
++    }) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//conditions:default": [
++            "//tensorflow/contrib/fused_conv:fused_conv_py",
+             "//tensorflow/contrib/tensorrt:init_py",
+             "//tensorflow/contrib/ffmpeg:ffmpeg_ops_py",
+         ],
+     }) + select({
+-        "//tensorflow:with_ignite_support": [
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_gcp_support": [],
++        "//conditions:default": [
++            "//tensorflow/contrib/bigtable",
++            "//tensorflow/contrib/cloud:cloud_py",
++        ],
++    }) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_ignite_support": [],
++        "//conditions:default": [
+             "//tensorflow/contrib/ignite",
+         ],
+-        "//conditions:default": [],
+     }),
+ )
+ 
+@@ -152,14 +182,26 @@ cc_library(
+     ] + if_mpi(["//tensorflow/contrib/mpi_collectives:mpi_collectives_py"]) + if_cuda([
+         "//tensorflow/contrib/nccl:nccl_kernels",
+     ]) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
+         "//tensorflow:linux_s390x": [],
+         "//tensorflow:windows": [],
++        "//tensorflow:no_kafka_support": [],
+         "//conditions:default": [
+             "//tensorflow/contrib/kafka:dataset_kernels",
++        ],
++    }) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_aws_support": [],
++        "//conditions:default": [
+             "//tensorflow/contrib/kinesis:dataset_kernels",
+-            "//tensorflow/contrib/tensorrt:trt_engine_op_kernel",
+         ],
+-    }),
++    }) + if_not_windows([
++        "//tensorflow/contrib/tensorrt:trt_engine_op_kernel",
++    ]),
+ )
+ 
+ cc_library(
+@@ -183,17 +225,33 @@ cc_library(
+         "//tensorflow/contrib/text:all_ops",
+         "//tensorflow/contrib/tpu:all_ops",
+     ] + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
+         "//tensorflow:linux_s390x": [],
+         "//tensorflow:windows": [],
++        "//tensorflow:no_kafka_support": [],
+         "//conditions:default": [
+             "//tensorflow/contrib/kafka:dataset_ops_op_lib",
+-            "//tensorflow/contrib/kinesis:dataset_ops_op_lib",
+-            "//tensorflow/contrib/tensorrt:trt_engine_op_op_lib",
+         ],
+     }) + select({
+-        "//tensorflow:with_ignite_support": [
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_aws_support": [],
++        "//conditions:default": [
++            "//tensorflow/contrib/kinesis:dataset_ops_op_lib",
++        ],
++    }) + if_not_windows([
++        "//tensorflow/contrib/tensorrt:trt_engine_op_op_lib",
++    ]) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_ignite_support": [],
++        "//conditions:default": [
+             "//tensorflow/contrib/ignite:dataset_ops_op_lib",
+         ],
+-        "//conditions:default": [],
+     }),
+ )
+diff --git a/tensorflow/core/platform/default/build_config.bzl b/tensorflow/core/platform/default/build_config.bzl
+index d884c1aa7c..927dbbc5b3 100644
+--- a/tensorflow/core/platform/default/build_config.bzl
++++ b/tensorflow/core/platform/default/build_config.bzl
+@@ -166,10 +166,10 @@ def cc_proto_library(
+         proto_gen(
+             name = name + "_genproto",
+             srcs = srcs,
+-            deps = [s + "_genproto" for s in deps],
+             includes = includes,
+             protoc = protoc,
+             visibility = ["//visibility:public"],
++            deps = [s + "_genproto" for s in deps],
+         )
+ 
+         # An empty cc_library to make rule dependency consistent.
+@@ -193,15 +193,15 @@ def cc_proto_library(
+     proto_gen(
+         name = name + "_genproto",
+         srcs = srcs,
+-        deps = [s + "_genproto" for s in deps],
++        outs = outs,
++        gen_cc = 1,
+         includes = includes,
+-        protoc = protoc,
+         plugin = grpc_cpp_plugin,
+         plugin_language = "grpc",
+         plugin_options = plugin_options,
+-        gen_cc = 1,
+-        outs = outs,
++        protoc = protoc,
+         visibility = ["//visibility:public"],
++        deps = [s + "_genproto" for s in deps],
+     )
+ 
+     if use_grpc_plugin:
+@@ -286,14 +286,14 @@ def py_proto_library(
+     proto_gen(
+         name = name + "_genproto",
+         srcs = srcs,
+-        deps = [s + "_genproto" for s in deps],
+-        includes = includes,
+-        protoc = protoc,
+-        gen_py = 1,
+         outs = outs,
+-        visibility = ["//visibility:public"],
++        gen_py = 1,
++        includes = includes,
+         plugin = grpc_python_plugin,
+         plugin_language = "grpc",
++        protoc = protoc,
++        visibility = ["//visibility:public"],
++        deps = [s + "_genproto" for s in deps],
+     )
+ 
+     if default_runtime and not default_runtime in py_libs + deps:
+@@ -345,14 +345,13 @@ def tf_proto_library_cc(
+         # libraries containing all the sources.
+         proto_gen(
+             name = cc_name + "_genproto",
+-            deps = [s + "_genproto" for s in cc_deps],
+             protoc = "@protobuf_archive//:protoc",
+             visibility = ["//visibility:public"],
++            deps = [s + "_genproto" for s in cc_deps],
+         )
+         native.cc_library(
+             name = cc_name,
+-            deps = cc_deps + ["@protobuf_archive//:protobuf_headers"] +
+-                   if_static([name + "_cc_impl"]),
++            deps = cc_deps + ["@protobuf_archive//:protobuf_headers"] + if_static([name + "_cc_impl"]),
+             testonly = testonly,
+             visibility = visibility,
+         )
+@@ -365,8 +364,8 @@ def tf_proto_library_cc(
+ 
+     cc_proto_library(
+         name = cc_name,
++        testonly = testonly,
+         srcs = srcs,
+-        deps = cc_deps + ["@protobuf_archive//:cc_wkt_protos"],
+         cc_libs = cc_libs + if_static(
+             ["@protobuf_archive//:protobuf"],
+             ["@protobuf_archive//:protobuf_headers"],
+@@ -376,11 +375,11 @@ def tf_proto_library_cc(
+             "-Wno-unused-but-set-variable",
+             "-Wno-sign-compare",
+         ]),
++        default_header = default_header,
+         protoc = "@protobuf_archive//:protoc",
+         use_grpc_plugin = use_grpc_plugin,
+-        testonly = testonly,
+         visibility = visibility,
+-        default_header = default_header,
++        deps = cc_deps + ["@protobuf_archive//:cc_wkt_protos"],
+     )
+ 
+ def tf_proto_library_py(
+@@ -399,9 +398,9 @@ def tf_proto_library_py(
+         # libraries containing all the sources.
+         proto_gen(
+             name = py_name + "_genproto",
+-            deps = [s + "_genproto" for s in py_deps],
+             protoc = "@protobuf_archive//:protoc",
+             visibility = ["//visibility:public"],
++            deps = [s + "_genproto" for s in py_deps],
+         )
+         native.py_library(
+             name = py_name,
+@@ -413,14 +412,14 @@ def tf_proto_library_py(
+ 
+     py_proto_library(
+         name = py_name,
++        testonly = testonly,
+         srcs = srcs,
+-        srcs_version = srcs_version,
+-        deps = deps + py_deps + ["@protobuf_archive//:protobuf_python"],
+-        protoc = "@protobuf_archive//:protoc",
+         default_runtime = "@protobuf_archive//:protobuf_python",
+-        visibility = visibility,
+-        testonly = testonly,
++        protoc = "@protobuf_archive//:protoc",
++        srcs_version = srcs_version,
+         use_grpc_plugin = use_grpc_plugin,
++        visibility = visibility,
++        deps = deps + py_deps + ["@protobuf_archive//:protobuf_python"],
+     )
+ 
+ def tf_jspb_proto_library(**kwargs):
+@@ -452,23 +451,23 @@ def tf_proto_library(
+ 
+     tf_proto_library_cc(
+         name = name,
++        testonly = testonly,
+         srcs = srcs,
+-        protodeps = protodeps,
+         cc_grpc_version = cc_grpc_version,
+         cc_libs = cc_libs,
+-        testonly = testonly,
+-        visibility = visibility,
+         default_header = default_header,
++        protodeps = protodeps,
++        visibility = visibility,
+     )
+ 
+     tf_proto_library_py(
+         name = name,
++        testonly = testonly,
+         srcs = srcs,
+         protodeps = protodeps,
+         srcs_version = "PY2AND3",
+-        testonly = testonly,
+-        visibility = visibility,
+         use_grpc_plugin = has_services,
++        visibility = visibility,
+     )
+ 
+ # A list of all files under platform matching the pattern in 'files'. In
+@@ -632,23 +631,41 @@ def tf_additional_lib_deps():
+ def tf_additional_core_deps():
+     return select({
+         "//tensorflow:android": [],
+-        "//tensorflow:windows": [],
+         "//tensorflow:ios": [],
+         "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_gcp_support": [],
+         "//conditions:default": [
+             "//tensorflow/core/platform/cloud:gcs_file_system",
+-            "//tensorflow/core/platform/s3:s3_file_system",
++        ],
++    }) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_hdfs_support": [],
++        "//conditions:default": [
+             "//tensorflow/core/platform/hadoop:hadoop_file_system",
+         ],
++    }) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_aws_support": [],
++        "//conditions:default": [
++            "//tensorflow/core/platform/s3:s3_file_system",
++        ],
+     })
+ 
+ # TODO(jart, jhseu): Delete when GCP is default on.
+ def tf_additional_cloud_op_deps():
+     return select({
+         "//tensorflow:android": [],
+-        "//tensorflow:windows": [],
+         "//tensorflow:ios": [],
+         "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_gcp_support": [],
+         "//conditions:default": [
+             "//tensorflow/contrib/cloud:bigquery_reader_ops_op_lib",
+             "//tensorflow/contrib/cloud:gcs_config_ops_op_lib",
+@@ -659,9 +676,10 @@ def tf_additional_cloud_op_deps():
+ def tf_additional_cloud_kernel_deps():
+     return select({
+         "//tensorflow:android": [],
+-        "//tensorflow:windows": [],
+         "//tensorflow:ios": [],
+         "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_gcp_support": [],
+         "//conditions:default": [
+             "//tensorflow/contrib/cloud/kernels:bigquery_reader_ops",
+             "//tensorflow/contrib/cloud/kernels:gcs_config_ops",
+diff --git a/tensorflow/tools/lib_package/BUILD b/tensorflow/tools/lib_package/BUILD
+index 85514b8629..aff26bf0fb 100644
+--- a/tensorflow/tools/lib_package/BUILD
++++ b/tensorflow/tools/lib_package/BUILD
+@@ -137,6 +137,24 @@ genrule(
+         "@snappy//:COPYING",
+         "@zlib_archive//:zlib.h",
+     ] + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_aws_support": [],
++        "//conditions:default": [
++            "@aws//:LICENSE",
++        ],
++    }) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_gcp_support": [],
++        "//conditions:default": [
++            "@com_github_googlecloudplatform_google_cloud_cpp//:LICENSE",
++        ],
++    }) + select({
+         "//tensorflow/core/kernels:xsmm": [
+             "@libxsmm_archive//:LICENSE.md",
+         ],
+@@ -153,14 +171,7 @@ genrule(
+             "@grpc//third_party/nanopb:LICENSE.txt",
+             "@grpc//third_party/address_sorting:LICENSE",
+         ],
+-    ) + select({
+-        "//tensorflow:linux_s390x": [],
+-        "//tensorflow:windows": [],
+-        "//conditions:default": [
+-            "@aws//:LICENSE",
+-            "@com_github_googlecloudplatform_google_cloud_cpp//:LICENSE",
+-        ],
+-    }),
++    ),
+     outs = ["include/tensorflow/c/LICENSE"],
+     cmd = "$(location :concat_licenses.sh) $(SRCS) >$@",
+     tools = [":concat_licenses.sh"],
+@@ -194,6 +205,24 @@ genrule(
+         "@snappy//:COPYING",
+         "@zlib_archive//:zlib.h",
+     ] + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_aws_support": [],
++        "//conditions:default": [
++            "@aws//:LICENSE",
++        ],
++    }) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_gcp_support": [],
++        "//conditions:default": [
++            "@com_github_googlecloudplatform_google_cloud_cpp//:LICENSE",
++        ],
++    }) + select({
+         "//tensorflow/core/kernels:xsmm": [
+             "@libxsmm_archive//:LICENSE.md",
+         ],
+@@ -203,14 +232,7 @@ genrule(
+     ]) + if_mkl([
+         "//third_party/mkl:LICENSE",
+         "//third_party/mkl_dnn:LICENSE",
+-    ]) + select({
+-        "//tensorflow:linux_s390x": [],
+-        "//tensorflow:windows": [],
+-        "//conditions:default": [
+-            "@aws//:LICENSE",
+-            "@com_github_googlecloudplatform_google_cloud_cpp//:LICENSE",
+-        ],
+-    }),
++    ]),
+     outs = ["include/tensorflow/jni/LICENSE"],
+     cmd = "$(location :concat_licenses.sh) $(SRCS) >$@",
+     tools = [":concat_licenses.sh"],
+diff --git a/tensorflow/tools/pip_package/BUILD b/tensorflow/tools/pip_package/BUILD
+index 164b3d8303..970dd49e11 100644
+--- a/tensorflow/tools/pip_package/BUILD
++++ b/tensorflow/tools/pip_package/BUILD
+@@ -167,6 +167,34 @@ filegroup(
+         "@zlib_archive//:zlib.h",
+         "@org_python_pypi_backports_weakref//:LICENSE",
+     ] + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_aws_support": [],
++        "//conditions:default": [
++            "@aws//:LICENSE",
++        ],
++    }) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_gcp_support": [],
++        "//conditions:default": [
++            "@com_github_googleapis_googleapis//:LICENSE",
++            "@com_github_googlecloudplatform_google_cloud_cpp//:LICENSE",
++        ],
++    }) + select({
++        "//tensorflow:android": [],
++        "//tensorflow:ios": [],
++        "//tensorflow:linux_s390x": [],
++        "//tensorflow:windows": [],
++        "//tensorflow:no_kafka_support": [],
++        "//conditions:default": [
++            "@kafka//:LICENSE",
++        ],
++    }) + select({
+         "//tensorflow/core/kernels:xsmm": [
+             "@libxsmm_archive//:LICENSE.md",
+         ],
+@@ -189,16 +217,7 @@ filegroup(
+         "@ngraph_tf//:LICENSE",
+         "@nlohmann_json_lib//:LICENSE.MIT",
+         "@tbb//:LICENSE",
+-    ]) + tf_additional_license_deps() + select({
+-        "//tensorflow:linux_s390x": [],
+-        "//tensorflow:windows": [],
+-        "//conditions:default": [
+-            "@aws//:LICENSE",
+-            "@com_github_googleapis_googleapis//:LICENSE",
+-            "@com_github_googlecloudplatform_google_cloud_cpp//:LICENSE",
+-            "@kafka//:LICENSE",
+-        ],
+-    }),
++    ]) + tf_additional_license_deps(),
+ )
+ 
+ sh_binary(
+-- 
+2.18.0
+
