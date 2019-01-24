@@ -21,6 +21,9 @@ RUN pip install -U --user keras_applications==1.0.5 --no-deps \
     && pip3 install -U --user keras_preprocessing==1.0.3 --no-deps \
     && ldconfig
 
+RUN sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 100 \
+    && sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 150 \
+
 WORKDIR /root
 RUN git clone https://github.com/lhelontra/tensorflow-on-arm/
 
