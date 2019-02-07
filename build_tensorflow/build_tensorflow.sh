@@ -80,6 +80,7 @@ function build_bazel()
 
   if [ -f "$BAZEL_BIN" ]; then
     log_app_msg "bazel already installed."
+    rm -f ${WORKDIR}/bin/bazel &>/dev/null
     ln -sf $BAZEL_BIN ${WORKDIR}/bin/bazel
     return 0
   fi
@@ -234,6 +235,8 @@ function build_tensorflow()
     BAZEL_LOCAL_RESOURCES="--local_resources ${BAZEL_AVALIABLE_RAM},${BAZEL_AVALIABLE_CPU},${BAZEL_AVALIABLE_IO}"
   fi
 
+  [[ "${BAZEL_EXTRA_FLAGS}" == *"build_pip_package"* ]] && BAZEL_EXTRA_FLAGS+=" --python_path=python${TF_PYTHON_VERSION}"
+
   $BAZEL_BIN build ${BAZEL_LOCAL_RESOURCES} -c opt ${BAZEL_COPT_FLAGS} --verbose_failures ${BAZEL_EXTRA_FLAGS} || return 1
 
   # Build a wheel, if needs
@@ -243,6 +246,11 @@ function build_tensorflow()
     if [ ! -z "$CROSSTOOL_DIR" ] && [ ! -z "$CROSSTOOL_NAME" ]; then
       export BDIST_OPTS="--universal"
     fi
+
+    mkdir -p ${TF_BUILD_OUTPUT} || {
+      log_failure_msg "error when creates output dir $TF_BUILD_OUTPUT"
+      exit 1
+    }
 
     # build a wheel.
     bazel-bin/tensorflow/tools/pip_package/build_pip_package $TF_BUILD_OUTPUT || return 1
@@ -256,23 +264,10 @@ function build_tensorflow()
   }
 
   # Copy library files, if needs
-  [[ "${BAZEL_EXTRA_FLAGS}" == *"libtensorflow.so"* ]] && {
-    # Clean and/or create output dir
-    if [ -d $TF_BUILD_OUTPUT ]; then
-      rm -rf ${TF_BUILD_OUTPUT} || {
-        log_failure_msg "error when removes output dir $TF_BUILD_OUTPUT"
-        exit 1
-      }
-    fi
-    mkdir -p ${TF_BUILD_OUTPUT} || {
-      log_failure_msg "error when creates output dir $TF_BUILD_OUTPUT"
-      exit 1
-    }
-
+  [[ "${BAZEL_EXTRA_FLAGS}" == *"libtensorflow"* ]] && {
     # collect the library files.
-    cp bazel-bin/tensorflow/libtensorflow.so $TF_BUILD_OUTPUT
+    cp bazel-bin/tensorflow/libtensorflow* $TF_BUILD_OUTPUT
     cp tensorflow/c/c_api.h $TF_BUILD_OUTPUT
-
     log_app_msg "Library files moved to $TF_BUILD_OUTPUT"
   }
 
