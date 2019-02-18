@@ -52,7 +52,7 @@ using docker
 ```shell
 cd build_tensorflow/
 docker build -t tf-arm -f Dockerfile .
-docker run -it -v /tmp/tensorflow_pkg/:/tmp/tensorflow_pkg/ --env TF_PYTHON_VERSION=3.5 tf-arm ./build_tensorflow.sh <path-of-config>
+docker run -it -v /tmp/tensorflow_pkg/:/tmp/tensorflow_pkg/ --env TF_PYTHON_VERSION=3.5 tf-arm ./build_tensorflow.sh configs/<conf-name> # rpi.conf, rk3399.conf ...
 ```
 
 ## Edit tweaks like bazel resources, board model, and others
