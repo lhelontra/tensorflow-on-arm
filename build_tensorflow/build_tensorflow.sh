@@ -80,8 +80,9 @@ function build_bazel()
 
   if [ -f "$BAZEL_BIN" ]; then
     log_app_msg "bazel already installed."
+    # make sure using correct bazel version
     rm -f ${WORKDIR}/bin/bazel &>/dev/null
-    ln -sf $BAZEL_BIN ${WORKDIR}/bin/bazel
+    ln -sf "${WORKDIR}/bin/bazel-${BAZEL_VERSION}" "${WORKDIR}/bin/bazel" &>/dev/null
     return 0
   fi
 
@@ -113,7 +114,8 @@ function build_bazel()
   fi
 
   chmod +x output/bazel
-  mv output/bazel $BAZEL_BIN
+  mv output/bazel "${WORKDIR}/bin/bazel-${BAZEL_VERSION}"
+  ln -sf "${WORKDIR}/bin/bazel-${BAZEL_VERSION}" "${WORKDIR}/bin/bazel" &>/dev/null
 
   return 0
 }
