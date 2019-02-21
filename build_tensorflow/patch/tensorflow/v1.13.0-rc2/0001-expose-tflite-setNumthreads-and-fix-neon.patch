@@ -1,0 +1,117 @@
+From ad1651d94b01322d5aadc1064c4adf5ad7cfa8fb Mon Sep 17 00:00:00 2001
+From: lhelontra <lhe.lontra@gmail.com>
+Date: Tue, 19 Feb 2019 14:32:10 -0300
+Subject: [PATCH] expose tflite setNumthreads and fix neon
+
+---
+ tensorflow/lite/kernels/internal/BUILD        | 25 +++++++++++++++++++
+ tensorflow/lite/python/interpreter.py         |  3 +++
+ .../interpreter_wrapper.cc                    |  5 ++++
+ .../interpreter_wrapper/interpreter_wrapper.h |  2 ++
+ 4 files changed, 35 insertions(+)
+
+diff --git a/tensorflow/lite/kernels/internal/BUILD b/tensorflow/lite/kernels/internal/BUILD
+index 4be3226938..bbaa0aaf0a 100644
+--- a/tensorflow/lite/kernels/internal/BUILD
++++ b/tensorflow/lite/kernels/internal/BUILD
+@@ -24,6 +24,10 @@ NEON_FLAGS_IF_APPLICABLE = select({
+         "-O3",
+         "-mfpu=neon",
+     ],
++    ":armeabi": [
++        "-O3",
++        "-mfpu=neon",
++    ],
+     ":armeabi-v7a": [
+         "-O3",
+         "-mfpu=neon",
+@@ -64,6 +68,13 @@ cc_library(
+     ],
+ )
+ 
++config_setting(
++    name = "aarch64",
++    values = {
++        "cpu": "aarch64",
++    },
++)
++
+ config_setting(
+     name = "arm",
+     values = {
+@@ -92,6 +103,13 @@ config_setting(
+     },
+ )
+ 
++config_setting(
++    name = "armeabi",
++    values = {
++        "cpu": "armeabi",
++    },
++)
++
+ config_setting(
+     name = "haswell",
+     values = {
+@@ -495,12 +513,19 @@ cc_library(
+         "//tensorflow/lite/kernels:op_macros",
+         "@gemmlowp",
+     ] + select({
++        ":aarch64": [
++            ":neon_tensor_utils",
++        ],
++    
+         ":arm": [
+             ":neon_tensor_utils",
+         ],
+         ":arm64-v8a": [
+             ":neon_tensor_utils",
+         ],
++        ":armeabi": [
++            ":neon_tensor_utils",
++        ],
+         ":armeabi-v7a": [
+             ":neon_tensor_utils",
+         ],
+diff --git a/tensorflow/lite/python/interpreter.py b/tensorflow/lite/python/interpreter.py
+index a6183d13b5..e9fef161b9 100644
+--- a/tensorflow/lite/python/interpreter.py
++++ b/tensorflow/lite/python/interpreter.py
+@@ -278,3 +278,6 @@ class Interpreter(object):
+ 
+   def reset_all_variables(self):
+     return self._interpreter.ResetVariableTensors()
++
++  def set_num_threads(self, i):
++    return self._interpreter.SetNumThreads(i)
+diff --git a/tensorflow/lite/python/interpreter_wrapper/interpreter_wrapper.cc b/tensorflow/lite/python/interpreter_wrapper/interpreter_wrapper.cc
+index d14af439ec..06f6c5b211 100644
+--- a/tensorflow/lite/python/interpreter_wrapper/interpreter_wrapper.cc
++++ b/tensorflow/lite/python/interpreter_wrapper/interpreter_wrapper.cc
+@@ -493,5 +493,10 @@ PyObject* InterpreterWrapper::ResetVariableTensors() {
+   Py_RETURN_NONE;
+ }
+ 
++PyObject* InterpreterWrapper::SetNumThreads(int i) {
++  interpreter_->SetNumThreads(i);
++  Py_RETURN_NONE;
++}
++
+ }  // namespace interpreter_wrapper
+ }  // namespace tflite
+diff --git a/tensorflow/lite/python/interpreter_wrapper/interpreter_wrapper.h b/tensorflow/lite/python/interpreter_wrapper/interpreter_wrapper.h
+index ffb0278025..410272d82a 100644
+--- a/tensorflow/lite/python/interpreter_wrapper/interpreter_wrapper.h
++++ b/tensorflow/lite/python/interpreter_wrapper/interpreter_wrapper.h
+@@ -71,6 +71,8 @@ class InterpreterWrapper {
+   // Returns a reference to tensor index i as a numpy array. The base_object
+   // should be the interpreter object providing the memory.
+   PyObject* tensor(PyObject* base_object, int i);
++  
++  PyObject* SetNumThreads(int i);
+ 
+  private:
+   // Helper function to construct an `InterpreterWrapper` object.
+-- 
+2.20.1
+
