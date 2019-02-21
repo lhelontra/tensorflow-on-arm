@@ -14,6 +14,15 @@ RUN echo "deb http://httpredir.debian.org/debian/ jessie main contrib non-free" 
     && apt-get update && apt-get install -y libpng12-dev \
     && rm -f /etc/apt/sources.list.d/jessie.list \
     && rm -rf /var/lib/apt/lists/*
+    
+RUN echo "deb http://httpredir.debian.org/debian/ buster main contrib non-free" > /etc/apt/sources.list.d/buster.list \
+    && apt-get update && apt-get install -y gcc-8 g++-8 \
+    && ln -sf /usr/bin/g++-8 /usr/bin/g++ && \
+    && ln -sf /usr/bin/gcc-8 /usr/bin/gcc && \
+    && ln -sf //usr/bin/gcc /usr/bin/cc && \
+    && ln -sf //usr/bin/g++ /usr/bin/c++ && \
+    && rm -f /etc/apt/sources.list.d/buster.list \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install -U --user keras_applications==1.0.5 --no-deps \
     && pip install -U --user keras_preprocessing==1.0.3 --no-deps \
@@ -28,5 +37,5 @@ WORKDIR /root
 RUN git clone https://github.com/lhelontra/tensorflow-on-arm/
 
 WORKDIR /root/tensorflow-on-arm/build_tensorflow/
-RUN git checkout v1.12.0
+RUN git checkout next
 CMD ["/bin/bash"]
