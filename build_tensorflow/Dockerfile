@@ -17,10 +17,10 @@ RUN echo "deb http://httpredir.debian.org/debian/ jessie main contrib non-free" 
     
 RUN echo "deb http://httpredir.debian.org/debian/ buster main contrib non-free" > /etc/apt/sources.list.d/buster.list \
     && apt-get update && apt-get install -y gcc-8 g++-8 \
-    && ln -sf /usr/bin/g++-8 /usr/bin/g++ && \
-    && ln -sf /usr/bin/gcc-8 /usr/bin/gcc && \
-    && ln -sf /usr/bin/gcc /usr/bin/cc && \
-    && ln -sf /usr/bin/g++ /usr/bin/c++ && \
+    && ln -sf /usr/bin/g++-8 /usr/bin/g++ \
+    && ln -sf /usr/bin/gcc-8 /usr/bin/gcc \
+    && ln -sf /usr/bin/gcc /usr/bin/cc \
+    && ln -sf /usr/bin/g++ /usr/bin/c++ \
     && rm -f /etc/apt/sources.list.d/buster.list \
     && rm -rf /var/lib/apt/lists/*
 
