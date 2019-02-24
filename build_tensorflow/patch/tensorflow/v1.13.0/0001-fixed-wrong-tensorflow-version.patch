@@ -1,0 +1,71 @@
+From 824f5375aa0cdf5d33487171ee10b26fd2b7087d Mon Sep 17 00:00:00 2001
+From: lhelontra <lhe.lontra@gmail.com>
+Date: Sun, 24 Feb 2019 02:31:32 -0300
+Subject: [PATCH] fixed wrong tensorflow version
+
+---
+ tensorflow/core/public/version.h      |  2 +-
+ tensorflow/tools/pip_package/setup.py | 10 ++++------
+ 2 files changed, 5 insertions(+), 7 deletions(-)
+
+diff --git a/tensorflow/core/public/version.h b/tensorflow/core/public/version.h
+index a55fe17dd5..47d407280c 100644
+--- a/tensorflow/core/public/version.h
++++ b/tensorflow/core/public/version.h
+@@ -19,7 +19,7 @@ limitations under the License.
+ // TensorFlow uses semantic versioning, see http://semver.org/.
+ 
+ #define TF_MAJOR_VERSION 1
+-#define TF_MINOR_VERSION 12
++#define TF_MINOR_VERSION 13
+ #define TF_PATCH_VERSION 0
+ 
+ // TF_VERSION_SUFFIX is non-empty for pre-releases (e.g. "-alpha", "-alpha.1",
+diff --git a/tensorflow/tools/pip_package/setup.py b/tensorflow/tools/pip_package/setup.py
+index 83081a1ff3..074f328428 100644
+--- a/tensorflow/tools/pip_package/setup.py
++++ b/tensorflow/tools/pip_package/setup.py
+@@ -45,20 +45,19 @@ DOCLINES = __doc__.split('\n')
+ # This version string is semver compatible, but incompatible with pip.
+ # For pip, we will remove all '-' characters from this string, and use the
+ # result for pip.
+-_VERSION = '1.12.0'
++_VERSION = '1.13.0'
+ 
+ REQUIRED_PACKAGES = [
+     'absl-py >= 0.1.6',
+     'astor >= 0.6.0',
+     'gast >= 0.2.0',
+-    'google_pasta >= 0.1.2',
+     'keras_applications >= 1.0.6',
+     'keras_preprocessing >= 1.0.5',
+-    'numpy >= 1.14.5, < 2.0',
++    'numpy >= 1.13.3',
+     'six >= 1.10.0',
+     'protobuf >= 3.6.1',
+     'tensorboard >= 1.12.0, < 1.13.0',
+-    'tensorflow_estimator >= 1.13.0rc0, < 1.14.0rc0',
++    'tensorflow_estimator >= 1.13.0, < 1.14.0rc0',
+     'termcolor >= 1.1.0',
+ ]
+ 
+@@ -249,7 +248,7 @@ setup(
+     url='https://www.tensorflow.org/',
+     download_url='https://github.com/tensorflow/tensorflow/tags',
+     author='Google Inc.',
+-    author_email='packages@tensorflow.org',
++    author_email='opensource@google.com',
+     # Contained modules and scripts.
+     packages=find_packages(),
+     entry_points={
+@@ -284,7 +283,6 @@ setup(
+         'Programming Language :: Python :: 3.4',
+         'Programming Language :: Python :: 3.5',
+         'Programming Language :: Python :: 3.6',
+-        'Programming Language :: Python :: 3.7',
+         'Topic :: Scientific/Engineering',
+         'Topic :: Scientific/Engineering :: Mathematics',
+         'Topic :: Scientific/Engineering :: Artificial Intelligence',
+-- 
+2.20.1
+

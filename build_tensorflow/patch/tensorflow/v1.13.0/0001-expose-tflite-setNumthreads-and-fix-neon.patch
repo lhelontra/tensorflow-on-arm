@@ -20,8 +20,8 @@ index 4be3226938..bbaa0aaf0a 100644
      ],
 +    ":armeabi": [
 +        "-O3",
-+        "-mfpu=neon",
 +    ],
++
      ":armeabi-v7a": [
          "-O3",
          "-mfpu=neon",
