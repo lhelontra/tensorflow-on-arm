@@ -9,7 +9,7 @@ RUN dpkg --add-architecture armhf && dpkg --add-architecture arm64 \
         libpython-dev libpython-all-dev libpython3-dev libpython3-all-dev \
         libpython-dev:armhf libpython-all-dev:armhf libpython3-dev:armhf libpython3-all-dev:armhf \
         libpython-dev:arm64 libpython-all-dev:arm64 libpython3-dev:arm64 libpython3-all-dev:arm64 gcc-8 g++-8 libpng-dev
-        
+
 RUN ln -sf /usr/bin/g++-8 /usr/bin/g++ \
     && ln -sf /usr/bin/gcc-8 /usr/bin/gcc \
     && ln -sf /usr/bin/gcc /usr/bin/cc \
