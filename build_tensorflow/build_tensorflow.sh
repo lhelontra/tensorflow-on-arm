@@ -55,7 +55,7 @@ function log_app_msg() {
 	echo -ne "[${BLUE}INFO${NC}] $@\n"
 }
 
-function create_tempdir()
+function create_workdir()
 {
   WORKDIR=${WORKDIR}/sources/
   if [ ! -d $WORKDIR ]; then
@@ -278,7 +278,7 @@ function build_tensorflow()
 
 function main()
 {
-    create_tempdir
+    create_workdir
     build_bazel
     toolchain
     download_tensorflow
