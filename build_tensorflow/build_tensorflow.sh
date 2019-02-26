@@ -27,7 +27,7 @@
 [ -f "$1" ] && {
   source "$1"
 } || {
-  echo "Use: $0 <config>"
+  echo -ne "Use: $0 <config>\n\tFor prepare environment only, uses: $0 <config> prepare\n"
   exit 1
 }
 
@@ -276,14 +276,25 @@ function build_tensorflow()
   log_app_msg "Done."
 }
 
+
+function prepare_env()
+{
+  # prepare environment for compiling
+  create_workdir
+  build_bazel
+  toolchain
+  download_tensorflow
+  echo -ne "Workdir:            \t${WORKDIR}\n"
+  echo -ne "Bazel binary:       \t${BAZEL_BIN}\n"
+  [ ! -z "$CROSSTOOL_DIR" ] && echo -ne "Toolchain directory:\t${CROSSTOOL_DIR}\n"
+}
+
+
 function main()
 {
-    create_workdir
-    build_bazel
-    toolchain
-    download_tensorflow
+    prepare_env
     configure_tensorflow
     build_tensorflow
 }
 
-main
+[ "$2" == "prepare" ] && prepare_env || main
