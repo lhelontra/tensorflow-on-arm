@@ -3,20 +3,16 @@ FROM debian:stretch
 RUN dpkg --add-architecture armhf && dpkg --add-architecture arm64 \
     && apt-get update && apt-get install -y \
         openjdk-8-jdk automake autoconf libpng-dev \
-        curl zip unzip libtool swig zlib1g-dev pkg-config git g++ wget xz-utils \
+        curl zip unzip libtool swig zlib1g-dev pkg-config git wget xz-utils \
         python-numpy python-pip python-mock \
         python3-numpy python3-pip python3-mock \
         libpython-dev libpython-all-dev libpython3-dev libpython3-all-dev \
         libpython-dev:armhf libpython-all-dev:armhf libpython3-dev:armhf libpython3-all-dev:armhf \
         libpython-dev:arm64 libpython-all-dev:arm64 libpython3-dev:arm64 libpython3-all-dev:arm64
 
-RUN echo "deb http://httpredir.debian.org/debian/ buster main contrib non-free" > /etc/apt/sources.list.d/buster.list \
-    && apt-get update && apt-get install -y gcc-8 g++-8 \
-    && ln -sf /usr/bin/g++-8 /usr/bin/g++ \
-    && ln -sf /usr/bin/gcc-8 /usr/bin/gcc \
-    && ln -sf /usr/bin/gcc /usr/bin/cc \
-    && ln -sf /usr/bin/g++ /usr/bin/c++ \
-    && rm -f /etc/apt/sources.list.d/buster.list \
+RUN echo "deb http://httpredir.debian.org/debian/ jessie main contrib non-free" > /etc/apt/sources.list.d/jessie.list \
+    && apt-get update && apt-get install -y g++ gcc \
+    && rm -f /etc/apt/sources.list.d/jessie.list \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install -U --user keras_applications==1.0.5 --no-deps \
