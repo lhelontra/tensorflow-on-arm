@@ -28,5 +28,5 @@ WORKDIR /root
 RUN git clone https://github.com/lhelontra/tensorflow-on-arm/
 
 WORKDIR /root/tensorflow-on-arm/build_tensorflow/
-RUN git checkout next
+RUN git checkout 1.13.1
 CMD ["/bin/bash"]
