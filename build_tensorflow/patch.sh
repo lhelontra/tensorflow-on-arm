@@ -143,6 +143,11 @@ index 000000000..ccddd6d50
 +  toolchains = {
 +    'armeabi|compiler':':cc-compiler-armeabi',
 +    "local|compiler": ":cc-compiler-local",
++    "armeabi": ":cc-compiler-armeabi",
++    "k8": ":cc-compiler-local",
++    "piii": ":cc-compiler-local",
++    "arm": ":cc-compiler-local",
++    "s390x": ":cc-compiler-local",
 +  },
 +)
 +
@@ -164,28 +169,23 @@ index 000000000..ccddd6d50
 +    compiler_files = ":empty",
 +    cpu = "local",
 +    dwp_files = ":empty",
-+    dynamic_runtime_libs = [":empty"],
 +    linker_files = ":empty",
 +    objcopy_files = ":empty",
-+    static_runtime_libs = [":empty"],
 +    strip_files = ":empty",
 +    supports_param_files = 1,
++    toolchain_identifier = "local_linux",
 +)
-+
-+
 +cc_toolchain(
 +  name = 'cc-compiler-armeabi',
 +  all_files = ':linaro_linux_all_files',
 +  compiler_files = ':linaro_linux_all_files',
 +  cpu = 'armeabi',
 +  dwp_files = ':empty',
-+  dynamic_runtime_libs = [':empty'],
 +  linker_files = ':linaro_linux_all_files',
 +  objcopy_files = 'linaro_linux_all_files',
-+  static_runtime_libs = [':empty'],
 +  strip_files = 'linaro_linux_all_files',
 +  supports_param_files = 1,
-+)
++  toolchain_identifier = "$CROSSTOOL_NAME",)
 diff --git a/tools/local_arm_compiler/CROSSTOOL b/tools/local_arm_compiler/CROSSTOOL
 new file mode 100644
 index 000000000..3ff006da8
@@ -195,14 +195,14 @@ index 000000000..3ff006da8
 +minor_version: ""
 +default_target_cpu: "same_as_host"
 +
-+default_toolchain {
-+  cpu: "k8"
-+  toolchain_identifier: "local_linux"
-+}
-+default_toolchain {
-+  cpu: "piii"
-+  toolchain_identifier: "local_linux"
-+}
++
++
++
++
++
++
++
++
 +default_toolchain {
 +  cpu: "darwin"
 +  toolchain_identifier: "local_darwin"
