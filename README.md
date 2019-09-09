@@ -37,7 +37,7 @@ Python wheels for TensorFlow are being [officially supported](https://medium.com
 Make you sure added arm architecture, see how to adds in debian flavors:
 ```shell
 dpkg --add-architecture armhf
-echo "deb [arch=armhf] http://httpredir.debian.org/debian/ stretch main contrib non-free" >> /etc/apt/sources.list
+echo "deb [arch=armhf] http://httpredir.debian.org/debian/ buster main contrib non-free" >> /etc/apt/sources.list
 ```
 if you want compile python support:
 ```shell
@@ -51,7 +51,7 @@ using docker
 ```shell
 cd build_tensorflow/
 docker build -t tf-arm -f Dockerfile .
-docker run -it -v /tmp/tensorflow_pkg/:/tmp/tensorflow_pkg/ --env TF_PYTHON_VERSION=3.5 tf-arm ./build_tensorflow.sh configs/<conf-name> # rpi.conf, rk3399.conf ...
+docker run -it -v /tmp/tensorflow_pkg/:/tmp/tensorflow_pkg/ --env TF_PYTHON_VERSION=3.7 tf-arm ./build_tensorflow.sh configs/<conf-name> # rpi.conf, rk3399.conf ...
 ```
 
 ## Edit tweaks like bazel resources, board model, and others
