@@ -262,8 +262,9 @@ function build_tensorflow()
   # Copy library files, if needs
   [[ "${BAZEL_EXTRA_FLAGS}" == *"libtensorflow"* ]] && {
     # collect the library files.
-    cp bazel-bin/tensorflow/libtensorflow* $TF_BUILD_OUTPUT
-    cp tensorflow/c/c_api.h $TF_BUILD_OUTPUT
+    cp bazel-bin/tensorflow/libtensorflow* $TF_BUILD_OUTPUT &>/dev/null
+    cp bazel-bin/tensorflow/lite/libtensorflowlite* $TF_BUILD_OUTPUT &>/dev/null
+    cp tensorflow/c/c_api.h $TF_BUILD_OUTPUT &>/dev/null
     log_app_msg "Library files moved to $TF_BUILD_OUTPUT"
   }
 
