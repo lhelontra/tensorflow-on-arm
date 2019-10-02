@@ -24,7 +24,7 @@ index 5bafcdc00c..7fb7b4a4ef 100644
 @@ -76,6 +79,13 @@ config_setting(
      },
  )
- 
+
 +config_setting(
 +    name = "armeabi",
 +    values = {
@@ -45,6 +45,5 @@ index 5bafcdc00c..7fb7b4a4ef 100644
          ],
          ":armeabi-v7a": [
              ":neon_tensor_utils",
--- 
+--
 2.20.1
-

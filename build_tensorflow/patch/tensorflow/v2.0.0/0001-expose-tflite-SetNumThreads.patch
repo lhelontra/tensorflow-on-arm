@@ -14,14 +14,14 @@ index 0515bd5e42..29217db41b 100644
 --- a/tensorflow/lite/python/interpreter.py
 +++ b/tensorflow/lite/python/interpreter.py
 @@ -455,6 +455,9 @@ class Interpreter(object):
- 
+
    def reset_all_variables(self):
      return self._interpreter.ResetVariableTensors()
-+    
++
 +  def set_num_threads(self, i):
 +    return self._interpreter.SetNumThreads(i)
- 
- 
+
+
  class InterpreterWithCustomOps(Interpreter):
 diff --git a/tensorflow/lite/python/interpreter_wrapper/interpreter_wrapper.cc b/tensorflow/lite/python/interpreter_wrapper/interpreter_wrapper.cc
 index b4da1fd6d3..ad5a375abb 100644
@@ -30,7 +30,7 @@ index b4da1fd6d3..ad5a375abb 100644
 @@ -502,6 +502,11 @@ PyObject* InterpreterWrapper::ResetVariableTensors() {
    Py_RETURN_NONE;
  }
- 
+
 +PyObject* InterpreterWrapper::SetNumThreads(int i) {
 +  interpreter_->SetNumThreads(i);
 +  Py_RETURN_NONE;
@@ -48,9 +48,8 @@ index de57f73203..6803d308bb 100644
    // should be the interpreter object providing the memory.
    PyObject* tensor(PyObject* base_object, int i);
 +  PyObject* SetNumThreads(int i);
- 
+
    // Adds a delegate to the interpreter.
    PyObject* ModifyGraphWithDelegate(TfLiteDelegate* delegate);
--- 
+--
 2.20.1
-
