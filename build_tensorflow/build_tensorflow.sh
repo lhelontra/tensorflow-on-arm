@@ -216,7 +216,7 @@ function configure_tensorflow()
      fi
   fi
 
-  yes '' | ./configure || {
+  yes '' | $PYTHON_BIN_PATH configure.py || {
       log_failure_msg "error when configure tensorflow"
       exit 1
   }
