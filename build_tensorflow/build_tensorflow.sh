@@ -198,6 +198,11 @@ function configure_tensorflow()
   $BAZEL_BIN clean
   export PYTHON_BIN_PATH=$(command -v python${TF_PYTHON_VERSION})
   export ${TF_BUILD_VARS}
+  
+  # TODO: llvm calling python2 (remove in future)
+  local default_python="$(command -v python)"
+  rm -f $(command -v python) &>/dev/null
+  ln -sf $PYTHON_BIN_PATH $default_python  &>/dev/null
 
   # if need_cuda is enabled, search sdk
   if [ "$TF_NEED_CUDA" == "1" ]; then
