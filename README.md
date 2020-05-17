@@ -61,6 +61,7 @@ see configuration file examples in: build_tensorflow/configs/
 ```shell
 cd build_tensorflow/
 chmod +x build_tensorflow.sh
-TF_PYTHON_VERSION=3.5 ./build_tensorflow.sh <path-of-config>
+TF_PYTHON_VERSION=3.5 ./build_tensorflow.sh <path-of-config> [noclean]
+# The optional [noclean] argument omits 'bazel clean' before building for debugging purposes.
 # If no output errors, the pip package will be in the directory: /tmp/tensorflow_pkg/
 ```
