@@ -133,7 +133,7 @@ function build_bazel()
 
 function toolchain()
 {
-  [ "$CROSSTOOL_COMPILER" != "yes" ] && return 0
+  [ "$CROSSTOOL_COMPILER" != "yes" ] || [ -z "$CROSSTOOL_URL" ] && return 0
 
   CROSSTOOL_DIR="${WORKDIR}/toolchain/${CROSSTOOL_DIR}/"
 
@@ -190,7 +190,7 @@ function download_tensorflow()
   fi
 
   if [ ! -z "$CROSSTOOL_DIR" ] && [ ! -z "$CROSSTOOL_NAME" ]; then
-    tf_toolchain_patch "$CROSSTOOL_NAME" "$CROSSTOOL_DIR" "$CROSSTOOL_EXTRA_INCLUDE" || {
+    tf_toolchain_patch "$CROSSTOOL_NAME" "$CROSSTOOL_DIR" "$CROSSTOOL_ROOT" "$CROSSTOOL_EXTRA_INCLUDE" || {
       log_failure_msg "error when apply crosstool patch"
       exit 1
     }
