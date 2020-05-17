@@ -108,8 +108,8 @@ function build_bazel()
     unzip bazel-${BAZEL_VERSION}-dist.zip -d bazel-${BAZEL_VERSION}/
     rm -f bazel-${BAZEL_VERSION}-dist.zip
     cd bazel-${BAZEL_VERSION}/
-    if [ "$BAZEL_PATCH" == "yes" ]; then
-      bazel_patch || {
+    if [ ! -z "$BAZEL_PATCH" ]; then
+      bazel_patch $BAZEL_PATCH || {
         log_failure_msg "error when apply patch"
         exit 1
       }
@@ -182,8 +182,8 @@ function download_tensorflow()
   git config user.email "temp@example.com"
   git config user.name "temp"
 
-  if [ "$TF_PATCH" == "yes" ]; then
-     tf_patch || {
+  if [ ! -z "$TF_PATCH" ]; then
+     tf_patch $TF_PATCH || {
        log_failure_msg "error when apply patch"
        exit 1
      }
