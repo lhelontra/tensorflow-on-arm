@@ -160,7 +160,7 @@ function download_tensorflow()
     cd tensorflow/
   else
     cd tensorflow/
-    $BAZEL_BIN clean &>/dev/null
+    [ "$1" != "noclean" ] && $BAZEL_BIN clean &>/dev/null
 
     # clean temp branch
     git reset --hard
@@ -206,7 +206,7 @@ function configure_tensorflow()
 {
   # configure tensorflow
   cd ${WORKDIR}/tensorflow
-  $BAZEL_BIN clean
+  [ "$1" != "noclean" ] && $BAZEL_BIN clean
   export PYTHON_BIN_PATH=$(command -v python${TF_PYTHON_VERSION})
   export ${TF_BUILD_VARS}
 
@@ -291,7 +291,7 @@ function prepare_env()
   create_workdir
   build_bazel
   toolchain
-  download_tensorflow
+  download_tensorflow "$1"
   echo -ne "Workdir:            \t${WORKDIR}\n"
   echo -ne "Bazel binary:       \t${BAZEL_BIN}\n"
   [ ! -z "$CROSSTOOL_DIR" ] && echo -ne "Toolchain directory:\t${CROSSTOOL_DIR}\n"
@@ -300,9 +300,9 @@ function prepare_env()
 
 function main()
 {
-    prepare_env
-    configure_tensorflow
+  prepare_env "$1"
+  configure_tensorflow "$1"
     build_tensorflow
 }
 
-[ "$2" == "prepare" ] && prepare_env || main
+[ "$2" == "prepare" ] && prepare_env || main "$2"
