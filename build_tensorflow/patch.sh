@@ -30,7 +30,8 @@ function tf_toolchain_patch()
 {
   local CROSSTOOL_NAME="$1"
   local CROSSTOOL_DIR="$2"
-  local CROSSTOOL_EXTRA_INCLUDE="$3"
+  local CROSSTOOL_ROOT="$3"
+  local CROSSTOOL_EXTRA_INCLUDE="$4"
   [ -z "$CROSSTOOL_EXTRA_INCLUDE" ] && CROSSTOOL_EXTRA_INCLUDE="/usr/local/include/"
   local CROSSTOOL_VERSION=$($CROSSTOOL_DIR/bin/$CROSSTOOL_NAME-gcc -dumpversion)
   git apply << EOF
@@ -146,7 +147,7 @@ index bfe91e711b..da292cdcaf 100644
                              ],
                          ),
                      ],
-@@ -331,13 +330,21 @@ def _impl(ctx):
+@@ -331,17 +330,23 @@ def _impl(ctx):
                              flags = [
                                  "-std=c++11",
                                  "-isystem",
@@ -164,15 +165,19 @@ index bfe91e711b..da292cdcaf 100644
 +		                       "-isystem",
 +                        "$CROSSTOOL_DIR/lib/gcc/$CROSSTOOL_NAME/$CROSSTOOL_VERSION/include-fixed",
 +                               "-isystem",
-+                        "/usr/include",
++                        "$CROSSTOOL_ROOT/usr/include",
 +                               "-isystem",
-+                        "/usr/include/$CROSSTOOL_NAME",
++                        "$CROSSTOOL_ROOT/usr/include/$CROSSTOOL_NAME",
 +                               "-isystem",
 +                        "$CROSSTOOL_EXTRA_INCLUDE",
                                  "-isystem",
                                  "%{PYTHON_INCLUDE_PATH}%",
-                                 "-isystem",
-@@ -559,12 +566,14 @@ def _impl(ctx):
+-                                "-isystem",
+-                                "/usr/include/",
+                             ],
+                         ),
+                     ],
+@@ -559,12 +564,15 @@ def _impl(ctx):
 
      if (ctx.attr.cpu == "armeabi"):
          cxx_builtin_include_directories = [
@@ -185,14 +190,16 @@ index bfe91e711b..da292cdcaf 100644
 +                "$CROSSTOOL_DIR/$CROSSTOOL_NAME/libc/usr/include/",
 +		"$CROSSTOOL_DIR/lib/gcc/$CROSSTOOL_NAME/$CROSSTOOL_VERSION/include",
 +		"$CROSSTOOL_DIR/lib/gcc/$CROSSTOOL_NAME/$CROSSTOOL_VERSION/include-fixed",
-                 "/usr/include",
+-                "/usr/include",
++                "$CROSSTOOL_ROOT/usr/include",
 -                "/tmp/openblas_install/include/",
 +                "/usr/include/$CROSSTOOL_NAME",
 +                "$CROSSTOOL_EXTRA_INCLUDE",
++                "%{PYTHON_INCLUDE_PATH}%"
              ]
      elif (ctx.attr.cpu == "local"):
          cxx_builtin_include_directories = ["/usr/lib/gcc/", "/usr/local/include", "/usr/include"]
-@@ -579,44 +588,44 @@ def _impl(ctx):
+@@ -579,44 +587,44 @@ def _impl(ctx):
          tool_paths = [
              tool_path(
                  name = "ar",
