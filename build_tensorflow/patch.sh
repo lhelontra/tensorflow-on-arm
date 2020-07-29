@@ -67,7 +67,7 @@ index f6981490b8..07675770d0 100644
  def _impl(ctx):
      if (ctx.attr.cpu == "armeabi"):
 -        toolchain_identifier = "arm-linux-gnueabihf"
-+        toolchain_identifier = "$CROSSTOOL_NAME",
++        toolchain_identifier = "$CROSSTOOL_NAME"
      elif (ctx.attr.cpu == "aarch64"):
          toolchain_identifier = "aarch64-linux-gnu"
      elif (ctx.attr.cpu == "local"):
