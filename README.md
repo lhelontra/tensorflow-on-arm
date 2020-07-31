@@ -12,15 +12,15 @@ apt-get install curl zip unzip libtool swig libpng-dev zlib1g-dev pkg-config git
 apt-get install python-numpy python-dev python-pip python-mock
 
 # If using a virtual environment, omit the --user argument
-pip install -U --user keras_applications==1.0.5 --no-deps
-pip install -U --user keras_preprocessing==1.0.3 --no-deps
+pip install -U --user keras_applications==1.0.8 --no-deps
+pip install -U --user keras_preprocessing==1.1.0 --no-deps
 
 # For python3
 apt-get install python3-numpy python3-dev python3-pip python3-mock
 
 # If using a virtual environment, omit the --user argument
-pip3 install -U --user keras_applications==1.0.5 --no-deps
-pip3 install -U --user keras_preprocessing==1.0.3 --no-deps
+pip3 install -U --user keras_applications==1.0.8 --no-deps
+pip3 install -U --user keras_preprocessing==1.1.0 --no-deps
 ```
 
 ## TensorFlow on Raspberry Pi
