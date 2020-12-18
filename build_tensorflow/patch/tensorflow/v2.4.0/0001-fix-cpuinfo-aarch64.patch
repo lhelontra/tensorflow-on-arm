@@ -1,6 +1,6 @@
-From d46ddcae126dcb146bcfb7d575879d895ea3d50a Mon Sep 17 00:00:00 2001
+From 65379c5cfa00dc597273e8a1aa480577eb0ea5bc Mon Sep 17 00:00:00 2001
 From: Leonardo Lontra <lhe.lontra@gmail.com>
-Date: Sun, 2 Aug 2020 20:19:07 -0300
+Date: Fri, 18 Dec 2020 03:02:43 -0300
 Subject: [PATCH] fix cpuinfo aarch64
 
 ---
@@ -8,7 +8,7 @@ Subject: [PATCH] fix cpuinfo aarch64
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/third_party/cpuinfo/BUILD.bazel b/third_party/cpuinfo/BUILD.bazel
-index 15cfcd1c4e..2dd9c6b5da 100644
+index 9b007cc0daa..7f5379604db 100644
 --- a/third_party/cpuinfo/BUILD.bazel
 +++ b/third_party/cpuinfo/BUILD.bazel
 @@ -100,8 +100,7 @@ cc_library(
@@ -18,9 +18,9 @@ index 15cfcd1c4e..2dd9c6b5da 100644
 -        ":linux_armeabi": COMMON_SRCS + ARM_SRCS + LINUX_SRCS + LINUX_ARM32_SRCS,
 -        ":linux_aarch64": COMMON_SRCS + ARM_SRCS + LINUX_SRCS + LINUX_ARM64_SRCS,
 +        ":linux_armeabi": COMMON_SRCS + ARM_SRCS + LINUX_SRCS + LINUX_ARM64_SRCS,
+         ":linux_mips64": COMMON_SRCS + LINUX_SRCS,
          ":macos_x86_64": COMMON_SRCS + X86_SRCS + MACH_SRCS + MACH_X86_SRCS,
          ":windows_x86_64": COMMON_SRCS + X86_SRCS + WINDOWS_X86_SRCS,
-         ":android_armv7": COMMON_SRCS + ARM_SRCS + LINUX_SRCS + LINUX_ARM32_SRCS + ANDROID_ARM_SRCS,
 -- 
 2.20.1
 
