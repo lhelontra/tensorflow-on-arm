@@ -21,6 +21,7 @@ apt-get install python3-numpy python3-dev python3-pip python3-mock
 # If using a virtual environment, omit the --user argument
 pip3 install -U --user keras_applications==1.0.8 --no-deps
 pip3 install -U --user keras_preprocessing==1.1.0 --no-deps
+pip3 install portpicker
 ```
 
 ## TensorFlow on Raspberry Pi
