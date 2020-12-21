@@ -48,11 +48,22 @@ apt-get install libpython-all-dev:armhf
 # For python3
 apt-get install libpython3-all-dev:armhf
 ```
-Using Docker
+### Using Docker
+
+#### Python 3.7
+
 ```shell
 cd build_tensorflow/
 docker build -t tf-arm -f Dockerfile .
 docker run -it -v /tmp/tensorflow_pkg/:/tmp/tensorflow_pkg/ --env TF_PYTHON_VERSION=3.7 tf-arm ./build_tensorflow.sh configs/<conf-name> # rpi.conf, rk3399.conf ...
+```
+
+#### Python 3.8
+
+```shell
+cd build_tensorflow/
+docker build -t tf-arm -f Dockerfile.bullseye .
+docker run -it -v /tmp/tensorflow_pkg/:/tmp/tensorflow_pkg/ --env TF_PYTHON_VERSION=3.8 tf-arm ./build_tensorflow.sh configs/<conf-name> # rpi.conf, rk3399.conf ...
 ```
 
 ## Edit tweaks like Bazel resources, board model, and others.
