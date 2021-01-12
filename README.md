@@ -68,6 +68,7 @@ docker run -it -v /tmp/tensorflow_pkg/:/tmp/tensorflow_pkg/ --env TF_PYTHON_VERS
 
 ## Edit tweaks like Bazel resources, board model, and others.
 See configuration file examples in: build_tensorflow/configs/
+Configurations can have custom patches applied to TensorFlow or Bazel. Configure these by providing their paths inside the `TF_PATCH` and `BAZEL_PATCH` variables (relative to the `patch/tensorflow` or `patch/bazel` directories, respectively).
 
 ## Finally, compile TensorFlow.
 ```shell
